@@ -25,5 +25,10 @@ A simple adder implementation and verification using UVM 1.2
 
 This is the bare minimum structure for the UVM testbench, from here the idea is to add the remaining pieces like
 environment, driver, monitor, transaction and more. The `run_phase` task in `top_test.sv` is temporal, it is only
-used display something in the console and check everything is working fine.
+used display something in the console and check everything is working fine. From here you can run `make` and see 
+the message.
 
+
+The next step is to create the transaction the transaction
+1. Create a `adder_trans.sv` in the `adder_uvc` directory
+2. Create the sequence
