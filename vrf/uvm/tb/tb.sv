@@ -1,5 +1,6 @@
-module tb();
+module tb;
   import uvm_pkg::*;
+  import top_test_pkg::*;
 
   // Clock generator
   logic clk;

@@ -1,4 +1,4 @@
-TEST =? test_base
+TEST ?= top_test
 VERBOSITY ?= UVM_MEDIUM
 SEED ?= 1
 RUN_DIR ?= work
@@ -7,10 +7,16 @@ PLUS ?=
 ROOT_DIR = $(CURDIR)
 RDIR = $(abspath $(RUN_DIR))
 
-INCL_FILES = +incdir+$(ROOT_DIR)/vrf/uvm
-RTL_FILES = $(ROOT_DIR)/rtl/adder.sv
-PKG_FILES = 
+INCL_FILES = +incdir+$(ROOT_DIR)/vrf/uvm \
+						 +incdir+$(ROOT_DIR)/vrf/uvm/test
+
+RTL_FILES = $(ROOT_DIR)/rtl/adder_if.sv \
+						$(ROOT_DIR)/rtl/adder.sv
+
+PKG_FILES = $(ROOT_DIR)/vrf/uvm/test/top_test_pkg.sv
+
 TEST_FILES = $(ROOT_DIR)/vrf/uvm/tb/tb.sv
+
 FILES = $(INCL_FILES) $(RTL_FILES) $(PKG_FILES) $(TEST_FILES)
 
 VCS = vcs -full64 -sverilog -ntb_opts uvm-1.2 \
@@ -31,7 +37,8 @@ version:
 	vcs -ID
 
 compile:
-	@mkdir -p $(RDIR)/sim && $(VCS)
+	@mkdir -p $(RDIR)/sim 
+	cd $(RDIR)/sim && $(VCS)
 
 sim:
 	cd $(RDIR)/sim && ./simv +ntb_random_seed=${SEED} $(SIM_OPTS)
