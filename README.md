@@ -14,7 +14,16 @@ A simple adder implementation and verification using UVM 1.2
 	1. Create a named `top_test` that extends `uvm_test`
 	2. Register this class in the factory with the proper macro.
 	3. The factory requires a constructor
-		3.1. Create the proper constructor for a uvm component
-	4. Declare a handler for an environment
-	5. Use the `build_phase` function to create the environment using the uvm factory mechanism
+		1.  Create the proper constructor for a uvm component
+	4. Create a `run_phase` task
+		1. Inside the task raise and drop an objection
+		2. After raising the objection call `uvm_info` to display a messagge		
+4. Create a `top_test_pkg.sv` in the `test` directory
+	1. Import `uvm_pkg` and include `uvm_macro.svh`
+	2. Include `top_test.sv`
+5. In `tb.sv` import `top_test_pkg`
+
+This is the bare minimum structure for the UVM testbench, from here the idea is to add the remaining pieces like
+environment, driver, monitor, transaction and more. The `run_phase` task in `top_test.sv` is temporal, it is only
+used display something in the console and check everything is working fine.
 
