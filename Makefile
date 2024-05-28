@@ -8,12 +8,17 @@ ROOT_DIR = $(CURDIR)
 RDIR = $(abspath $(RUN_DIR))
 
 INCL_FILES = +incdir+$(ROOT_DIR)/vrf/uvm \
-						 +incdir+$(ROOT_DIR)/vrf/uvm/test
+						 +incdir+$(ROOT_DIR)/vrf/uvm/test \
+						 +incdir+$(ROOT_DIR)/vrf/uvm/env \
+						 +incdir+$(ROOT_DIR)/vrf/uvm/uvcs/adder_uvc \
+						 +incdir+$(ROOT_DIR)/vrf/uvm/tb
 
 RTL_FILES = $(ROOT_DIR)/rtl/adder_if.sv \
 						$(ROOT_DIR)/rtl/adder.sv
 
-PKG_FILES = $(ROOT_DIR)/vrf/uvm/test/top_test_pkg.sv
+PKG_FILES = $(ROOT_DIR)/vrf/uvm/uvcs/adder_uvc/adder_pkg.sv \
+						$(ROOT_DIR)/vrf/uvm/env/top_env_pkg.sv \
+						$(ROOT_DIR)/vrf/uvm/test/top_test_pkg.sv
 
 TEST_FILES = $(ROOT_DIR)/vrf/uvm/tb/tb.sv
 

@@ -3,9 +3,11 @@
 
 package top_test_pkg;
 
-  import uvm_pkg::*;
   `include "uvm_macros.svh"
+  import uvm_pkg::*;
 
+  import adder_pkg::*;
+  import top_env_pkg::*;
   `include "top_test.sv"
 
 endpackage : top_test_pkg

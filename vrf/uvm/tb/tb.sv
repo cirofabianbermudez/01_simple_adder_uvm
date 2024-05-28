@@ -22,6 +22,7 @@ module tb;
   );
 
   initial begin
+    $timeformat(-9, 0, "ns", 10);
     run_test();
   end
 
