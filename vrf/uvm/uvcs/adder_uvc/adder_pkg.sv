@@ -10,6 +10,7 @@ package adder_pkg;
   `include "adder_sequencer.sv"
   `include "adder_sequence_base.sv"
   `include "adder_driver.sv"
+  `include "adder_monitor.sv"
   `include "adder_agent.sv"
 
 endpackage : adder_pkg

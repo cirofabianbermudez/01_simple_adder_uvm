@@ -13,16 +13,18 @@ module tb;
              rst = 0;
   end
   
-  adder_if adder_if_0();
+  adder_if vif();
 
   adder dut (
-    .A(adder_if_0.A),
-    .B(adder_if_0.B),
-    .C(adder_if_0.C)
+    .A(vif.A),
+    .B(vif.B),
+    .C(vif.C)
   );
 
   initial begin
     $timeformat(-9, 0, "ns", 10);
+    $fsdbDumpvars;
+    uvm_config_db #(virtual adder_if)::set(null, "uvm_test_top.env.agt", "vif", vif);
     run_test();
   end
 

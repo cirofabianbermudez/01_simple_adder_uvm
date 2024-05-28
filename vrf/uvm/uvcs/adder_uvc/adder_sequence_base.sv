@@ -19,6 +19,7 @@ endfunction : new
 task adder_sequence_base::body();
   repeat(10) begin
     req = adder_sequence_item::type_id::create("req");
+    `uvm_info(get_type_name(), "New transaction generated", UVM_MEDIUM);
     start_item(req);
     if ( !req.randomize() ) begin
       `uvm_error(get_type_name(), "Failed to randomize transaction")

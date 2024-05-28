@@ -4,31 +4,31 @@ A simple adder implementation and verification using UVM 1.2
 
 ## Basic structure
 
-1. Create an interface `adder_if.sv` for the adder in the `rtl` directory
-2. Create a `tb.sv` file with the following in the `tb` directory:
+1. Create an interface `adder_if.sv` for the adder in the `vrf/uvm/rtl` directory.
+1. Create a `tb.sv` file with the following in the `tb` directory:
 	1. Import the UVM-1.2 library with `import uvm_pkg::*`
 	2. Instanciate the interface
 	3. Instanciate the adder
 	4. Connect the adder and interface
 	5. Generate the basic clock and reset signals.
 	6. In an initial block put the `run_test()` function, this is the UVM entry point.
-3. Create a `top_test.sv` file in the `test` directory.
+2. Create a `top_test.sv` file in the `test` directory.
 	1. Create a named `top_test` that extends `uvm_test`
 	2. Register this class in the factory with the proper macro, in this case a `uvm_component_utils`.
 	3. The factory requires a constructor. Create the proper constructor for a uvm component
 	4. Create a `run_phase` task
 		1. Inside the task raise and drop an objection
 		2. After raising the objection call `uvm_info` to display a messagge		
-4. Create a `top_test_pkg.sv` in the `test` directory
+3. Create a `top_test_pkg.sv` in the `test` directory
 	1. Import `uvm_pkg` and include `uvm_macro.svh`, this file already have header guards.
 	2. It is a good practice to use header guard with the preprocessor directives `ifndef/define/endif`to avoid importing the package multiple times
 	2. Include `top_test.sv`
-5. In `tb.sv` import `top_test_pkg`
+4. In `tb.sv` import `top_test_pkg`
 
 This is the bare minimum structure for the UVM testbench, you can run this code without errors but it doesnt do anything yet besides displaying a message, from here the idea is to add the remaining pieces like environment, driver, monitor, transaction and more. The `run_phase` task in `top_test.sv` is just displaying a message rigth now but it is in charge of starting the sequence that will stimulate the DUT later keep this in mind. To compile and run the code it is necessary to have a `Makefile` with everything configured, please refer to the `Makefile` provided. 
 
 
-The structure of a UVM testbench is a top bottom aproach, however to we need the bottom elements first.
+The structure of a UVM testbench is a top bottom aproach, however to we need define the bottom elements first.
 
 ## Sequence item / Transaction
 
@@ -63,13 +63,13 @@ The structure of a UVM testbench is a top bottom aproach, however to we need the
 ## Driver
 
 1. Create a `adder_driver.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
-	1. Create a class `adder_sequence_driver` that extends `uvm_driver` parameterized with the transaction
+	1. Create a class `adder_driver` that extends `uvm_driver` parameterized with the transaction
 	2. Register this class in the factory with the proper macro, in this case a `uvm_component_utils`.
 	3. The factory requires a constructor, create the proper constructor for a uvm component
 2. Create a `run_phase()` task and inside
 	1. Create a `forever` loop and inside
 	2. Call `seq_item_port.get_next_item(req);`
-	3. Call `uvm_info(get_type_name(), {"req item\n",req.sprint}, UVM_HIGH)` 
+	3. Call `uvm_info(get_type_name(), {"req item\n",req.sprint}, UVM_HIGH)`, this is temporal because using the montor is the way to go
 	4. Call `seq_item_port.item_done();`
 
 ## Agent
@@ -133,10 +133,72 @@ The structure of a UVM testbench is a top bottom aproach, however to we need the
 6. After the sequence has completed generating stimulus, the sequence `body` exits, which unblocks the test's `start()` method. The test will then continue with its next statements, which includes dropping its objection flag and allowing the `run_phase` to end.
 
 
-The 
+
+The `Makefile` needs to be changed, 
+1. Use `+incdir+` to point to each directory that contains a file that was used in an include directive, update `INCL_FILES` variable
+2. Add the package in order of apperance, use a bottom to top aproach, update `PKG_FILES` variable
 
 
+At this point the testbench is capable of generating the UVM testbench hireachy, create and start sequences from the `test_top`, pass the transactions inside the sequence throgh the driver, the sequencer handles that, and display the transction in the console. I know, a lot of work just to acomplish that, but later you will learn how to take advantage of randomization, overrides to make your job easier. Let say this structure is dificult to create and understand at the begginig, then you can reuse most of the code for many other projects. 
+
+## Connect to the DUT
+
+1. Move `adder_if.sv` into `vrf/uvm/uvcs/adder_uvc` directory.
+	1. Do not include the interface in `adder_pkg.sv`, this is ilegal in SystemVerilog
+	2. It a good idea to keep all the files refer to the agent in one place
+2. In `tb.sv` make the instance of the interface, referred to as a `virtual interface`, available to the environment.
+	1. This is done using the UVM configuration database
+	2. Before the `run_test()` method call `uvm_config_db #(virtual adder_if)::set(null, "uvm_test_top.env.agt", "vif", vif);`
+	3. The instance name of `adder_if` if `vif`, could be any name
+	4. "uvm_test_top.env.agt" is the path where this configuration is available to be retrive using the `get` version of the `uvm_config_db` method, also module below the agt have access to this configuration if they want to
+3. Declare an atribute, `virtual adder_if` called `vif`
+	1. Create a `build_phase` and inside
+	2. Retrive the configuration for the virsual interface and check for errors
+     ```
+		 if (!uvm_config_db#(virtual adder_if)::get(get_parent(), "", "vif", vif)) begin
+		  `uvm_fatal(get_name(), "Could not retrieve adder_if from config db")
+		end
+	```
+
+## Monitor
+1. Create a `adder_monitor.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
+	1. Create a class `adder_monitor` that extends `uvm_monitor`
+	2. Register this class in the factory with the proper macro, in this case a `uvm_component_utils`.
+	3. The factory requires a constructor, create the proper constructor for a uvm component
+2. Declare an atribute, `virtual adder_if` called `vif`
+	1. Create a `build_phase` and inside
+	2. Retrive the configuration for the virtual interface and check for errors
+     ```
+		 if (!uvm_config_db#(virtual adder_if)::get(get_parent(), "", "vif", vif)) begin
+		  `uvm_fatal(get_name(), "Could not retrieve adder_if from config db")
+		end
+	```
+3. Declare an atribute `adder_sequence_item` called`trans`
+4. Declare an atribute  `uvm_analysis_port #(adder_sequence_item)` called `analysis_port`
+	1. Inside the `build_phase` after the error check instanciate the analysis port using a normal `new()` construct
+	2. `analysis_port = new("analysis_port", this);`
+5. Create a `run_phase` and inside instantiate `trans` using the uvm mechanism `::type_id::create()` called `trans`
+6. After the instantiation capture the values and write to the analysis port, here is an example code
+	```
+	  forever @(vif.C) begin
+		trans.A = vif.A;
+		trans.B = vif.B;
+		trans.C = vif.C;
+		analysis_port.write(trans);
+		`uvm_info(get_type_name(), $sformatf("%4d + %4d = %4d", vif.A, vif.B, vif.C), UVM_MEDIUM)
+	  end
+	```
+7. In `adder_agent.sv`
+	1. Declare an atribute `adder_monitor` called `mon`
+	2. Instanciate the monitor using the uvm mechanism `::type_id::create()`
+8. In `adder_driver.sv`
+	1. Delete the uvm_info line inside the forever loop
+9. Do not forget to include `adder_monitor.sv` in `adder_pkg.sv`
 
 
+## Verdi support
+
+1. Add put `$fsdbDumpvars;` as the first line inside the `initial` block in the `tb.sv`
+2. Make sure you have `-lca -debug_access+all+reverse -kdb +vcs+vcdpluson` in your flags
 
 

@@ -13,16 +13,18 @@ INCL_FILES = +incdir+$(ROOT_DIR)/vrf/uvm \
 						 +incdir+$(ROOT_DIR)/vrf/uvm/uvcs/adder_uvc \
 						 +incdir+$(ROOT_DIR)/vrf/uvm/tb
 
-RTL_FILES = $(ROOT_DIR)/rtl/adder_if.sv \
-						$(ROOT_DIR)/rtl/adder.sv
+RTL_FILES = $(ROOT_DIR)/rtl/adder.sv
+
 
 PKG_FILES = $(ROOT_DIR)/vrf/uvm/uvcs/adder_uvc/adder_pkg.sv \
 						$(ROOT_DIR)/vrf/uvm/env/top_env_pkg.sv \
 						$(ROOT_DIR)/vrf/uvm/test/top_test_pkg.sv
 
+INTER_FILES = $(ROOT_DIR)/rtl/adder_if.sv
+
 TEST_FILES = $(ROOT_DIR)/vrf/uvm/tb/tb.sv
 
-FILES = $(INCL_FILES) $(RTL_FILES) $(PKG_FILES) $(TEST_FILES)
+FILES = $(INCL_FILES) $(RTL_FILES) $(PKG_FILES) $(INTER_FILES) $(TEST_FILES)
 
 VCS = vcs -full64 -sverilog -ntb_opts uvm-1.2 \
 			-lca -debug_access+all+reverse -kdb +vcs+vcdpluson \
@@ -50,6 +52,9 @@ sim:
 
 random:
 	cd $(RDIR)/sim && ./simv +ntb_random_seed_automatic $(SIM_OPTS)
+
+verdi:
+	cd $(RDIR)/sim && verdi -dbdir ./simv.daidir -ssf ./novas.fsdb -nologo &
 
 clean:
 	rm -rf $(RDIR)
