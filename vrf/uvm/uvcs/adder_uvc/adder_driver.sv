@@ -30,7 +30,7 @@ task adder_driver::run_phase(uvm_phase phase);
   `uvm_info(get_type_name(), "start run_phase", UVM_MEDIUM)
   forever begin
     seq_item_port.get_next_item(req);
-    `uvm_info(get_type_name(), $sformatf("A = %4d, B = %4d", req.A, req.B), UVM_MEDIUM)
+    //`uvm_info(get_type_name(), $sformatf("A = %4d, B = %4d", req.A, req.B), UVM_MEDIUM)
     do_drive();
     seq_item_port.item_done();
     #10;

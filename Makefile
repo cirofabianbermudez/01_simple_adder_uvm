@@ -38,7 +38,7 @@ SIM_OPTS = +UVM_TESTNAME=$(TEST) +UVM_VERBOSITY=$(VERBOSITY) -l simv.log \
 
 .PHONY: version compile sim random clean help
 
-all: compile sim
+all: compile random coverage
 
 version:
 	vcs -ID
@@ -55,6 +55,9 @@ random:
 
 verdi:
 	cd $(RDIR)/sim && verdi -dbdir ./simv.daidir -ssf ./novas.fsdb -nologo &
+
+coverage:
+	cd $(RDIR)/sim && urg -dir simv.vdb && urg -dir simv.vdb -format text
 
 clean:
 	rm -rf $(RDIR)

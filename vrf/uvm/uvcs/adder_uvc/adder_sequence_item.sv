@@ -17,8 +17,8 @@ class adder_sequence_item extends uvm_sequence_item;
   extern function string convert2string();
 
   constraint adder_seq_const_small {
-    A < 10; 
-    B < 10;
+    A inside {[0:255]};
+    B inside {[0:255]};
   }
 
 endclass : adder_sequence_item 

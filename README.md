@@ -202,9 +202,9 @@ At this point the testbench is capable of generating the UVM testbench hireachy,
 2. Make sure you have `-lca -debug_access+all+reverse -kdb +vcs+vcdpluson` in your flags
 
 
-## Advanced Agent
+## Advanced Agent 
 
-Sometimes the agent does not need to have a driver and a sequencer the only thing you need is to monitor, when this happens the agent is a pasive agent, otherwise it is active. to acomplish that you can use a configuration object. 
+Sometimes the agent does not need to have a driver and a sequencer if the only thing you need is to monitor the DUT, when this happens the agent is a pasive agent, otherwise it is active. To acomplish that you can use a configuration object. 
 
 1. Create a `adder_config.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
 	1. Create a class `adder_config` that extends `uvm_object`
@@ -218,8 +218,8 @@ Sometimes the agent does not need to have a driver and a sequencer the only thin
 	3. Instanciate the `adder_config` using the uvm mechanism `::type_id::create()` called `adder_agt_cfg`
 	4. Configure the parameters of `adder_agt_cfg` to make the agent active and enable the coverage.
 	5. Register the configuration object into the `uvm_config_db`,  `uvm_config_db #()::set(null, "uvm_test_top.env.agt", "vif", vif);`
-	6. Move the instantiation code of the adder agent to he function
-	7. Call the function `build_adder_agent` inside the `build_phase` function.
+	6. Move the instantiation code of the adder agent to the `build_adder_agent()` function
+	7. Call the function `build_adder_agent()` inside the `build_phase()` function.
 
 3. Open `adder_agent.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
 	1. Declare an atribute `adder_config` called `cfg`.
@@ -228,6 +228,13 @@ Sometimes the agent does not need to have a driver and a sequencer the only thin
 	4. Do the same in the conect phase.
 4. Include `adder_config.sv` into `adder_pkg.sv`
 
+
+Another interesting feature we can add to the agent is to know much of the design we have tested. This is called coverage, and it is a way to check how many combinations of different inputs we have passed through out the DUT.
+
+1. Create a `adder_coverage.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
+	1. Create a class `adder_coverage` that extends `uvm_suscriber`
+	2. Register this class in the factory with the proper macro, in this case a `uvm_component_utils`.
+	3. The factory requires a constructor, create the proper constructor for a uvm object
 
 
 

@@ -9,6 +9,7 @@ class adder_agent extends uvm_agent;
   adder_driver    drv;
   adder_monitor   mon;
   adder_config    cfg;
+  adder_coverage  cov;
 
   extern function new(string name, uvm_component parent);
   extern function void build_phase(uvm_phase phase);
@@ -38,6 +39,10 @@ function void adder_agent::build_phase(uvm_phase phase);
   mon = adder_monitor::type_id::create("mon", this);
   `uvm_info(get_type_name(), "mon created", UVM_MEDIUM)
 
+  if (cfg.coverage_enable) begin
+    cov = adder_coverage::type_id::create("cov",this);
+  end
+
 endfunction : build_phase
 
 
@@ -46,6 +51,10 @@ function void adder_agent::connect_phase(uvm_phase phase);
   if (cfg.is_active == UVM_ACTIVE) begin
     drv.seq_item_port.connect(sqr.seq_item_export);
     `uvm_info(get_type_name(), "drv and sqr connected", UVM_MEDIUM)
+  end
+
+  if (cfg.coverage_enable) begin
+    mon.analysis_port.connect(cov.analysis_export);
   end
 
 endfunction : connect_phase
