@@ -24,7 +24,7 @@ module tb;
   initial begin
     $timeformat(-9, 0, "ns", 10);
     $fsdbDumpvars;
-    uvm_config_db #(virtual adder_if)::set(null, "uvm_test_top.env.agt", "vif", vif);
+    uvm_config_db #(virtual adder_if)::set(null, "uvm_test_top.env.adder_agt", "vif", vif);
     run_test();
   end
 

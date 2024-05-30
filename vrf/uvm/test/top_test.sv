@@ -39,7 +39,7 @@ task top_test::run_phase(uvm_phase phase);
   begin
     adder_sequence_base seq;
     seq = adder_sequence_base::type_id::create("seq");
-    seq.start(env.agt.sqr);
+    seq.start(env.adder_agt.sqr);
   end
   phase.drop_objection(this);
   `uvm_info(get_type_name(), "end run_phase drop objection", UVM_MEDIUM)

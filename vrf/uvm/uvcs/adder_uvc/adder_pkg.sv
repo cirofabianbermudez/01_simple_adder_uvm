@@ -7,6 +7,7 @@ package adder_pkg;
   import uvm_pkg::*;
 
   `include "adder_sequence_item.sv"
+  `include "adder_config.sv"
   `include "adder_sequencer.sv"
   `include "adder_sequence_base.sv"
   `include "adder_driver.sv"

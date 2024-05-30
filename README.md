@@ -69,7 +69,7 @@ The structure of a UVM testbench is a top bottom aproach, however to we need def
 2. Create a `run_phase()` task and inside
 	1. Create a `forever` loop and inside
 	2. Call `seq_item_port.get_next_item(req);`
-	3. Call `uvm_info(get_type_name(), {"req item\n",req.sprint}, UVM_HIGH)`, this is temporal because using the montor is the way to go
+	3. Call `uvm_info(get_type_name(), {"req item\n",req.sprint}, UVM_HIGH)`, this is temporal because using the monitor is the way to go
 	4. Call `seq_item_port.item_done();`
 
 ## Agent
@@ -150,7 +150,7 @@ At this point the testbench is capable of generating the UVM testbench hireachy,
 	1. This is done using the UVM configuration database
 	2. Before the `run_test()` method call `uvm_config_db #(virtual adder_if)::set(null, "uvm_test_top.env.agt", "vif", vif);`
 	3. The instance name of `adder_if` if `vif`, could be any name
-	4. "uvm_test_top.env.agt" is the path where this configuration is available to be retrive using the `get` version of the `uvm_config_db` method, also module below the agt have access to this configuration if they want to
+	4. "uvm_test_top.env.agt" is the path where this configuration is available to be retrive using the `get` version of the `uvm_config_db` method, also module below the agt have access to this configuration.
 3. Declare an atribute, `virtual adder_if` called `vif`
 	1. Create a `build_phase` and inside
 	2. Retrive the configuration for the virsual interface and check for errors
@@ -200,5 +200,35 @@ At this point the testbench is capable of generating the UVM testbench hireachy,
 
 1. Add put `$fsdbDumpvars;` as the first line inside the `initial` block in the `tb.sv`
 2. Make sure you have `-lca -debug_access+all+reverse -kdb +vcs+vcdpluson` in your flags
+
+
+## Advanced Agent
+
+Sometimes the agent does not need to have a driver and a sequencer the only thing you need is to monitor, when this happens the agent is a pasive agent, otherwise it is active. to acomplish that you can use a configuration object. 
+
+1. Create a `adder_config.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
+	1. Create a class `adder_config` that extends `uvm_object`
+	2. Register this class in the factory with the proper macro, in this case a `uvm_object_utils`.
+	3. The factory requires a constructor, create the proper constructor for a uvm object
+	4. Declare an atribute  `uvm_active_passive_enum` called `is_active` and assign a value of `UVM_ACTIVE`
+	5. Declare an atribute  `bit` called `coverage_enable`.
+2. Open `top_env.sv`
+	1. Declare an atribute  `adder_config` called `adder_agt_cfg`.
+	2. Create a void function called `build_adder_agent()` and inside
+	3. Instanciate the `adder_config` using the uvm mechanism `::type_id::create()` called `adder_agt_cfg`
+	4. Configure the parameters of `adder_agt_cfg` to make the agent active and enable the coverage.
+	5. Register the configuration object into the `uvm_config_db`,  `uvm_config_db #()::set(null, "uvm_test_top.env.agt", "vif", vif);`
+	6. Move the instantiation code of the adder agent to he function
+	7. Call the function `build_adder_agent` inside the `build_phase` function.
+
+3. Open `adder_agent.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
+	1. Declare an atribute `adder_config` called `cfg`.
+	2. In the build phase retrive the configuration `uvm_config_db #(adder_config)::get(this, "", "cfg", cfg) ` and check for errors
+	3. Using an if statement check the `cfg.is_active` attribute to decide to instantiate or not the driver and the sequencer
+	4. Do the same in the conect phase.
+4. Include `adder_config.sv` into `adder_pkg.sv`
+
+
+
 
 
