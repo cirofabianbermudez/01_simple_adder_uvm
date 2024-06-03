@@ -41,21 +41,16 @@
 6. Finally open `tb.sv` which is inside `vrf/uvm/tb` and import `top_test_pkg`, use `import top_test_pkg::*;`.
 
 
-> [!Note] Note 01
+> [!Note]
+> **Note: 01**
 > A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once. Helps maintain consistency, encapsulation and performance. It is recommended to use it in all the `.sv` files with the exception of `tb.sv`.
 
 
-> [!Note] Callout can have an _optional_ title
-> Callouts can also be nested:
-> > [!Hint]- You can also create foldable callouts with `+` or `-`
-> > This is hidden until unfolded.
-
-
+> [!Note]
 > **Note: 02**
-> 
 > >```systemverilog
-> >function new(string name, uvm_component parent);
-> >		super.new(name, parent);
+> > function new(string name, uvm_component parent);
+> >	  super.new(name, parent);
 > > endfunction : new
 > > ```
 > **UVM Cookbook - UVM Basics - The UVM Factory - Factory Costructor Defaults - pages 9-11.**
