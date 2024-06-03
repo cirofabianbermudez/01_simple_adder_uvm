@@ -320,21 +320,64 @@ Note: when using `+ntb_random_seed_automatic` the seed appears in both the simul
 
 ([**Basic structure**](#basic-structure)) -
 
-A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once. Helps maintain consistency, encapsulation and performance. It is recommended to use it in all the `.sv` files with the exception of `tb.sv`.
+A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once. Helps maintain consistency, encapsulation and improve performance. It is recommended to use it in all the `.sv` files with the exception of `tb.sv`. 
+
+For example:
+
+```systemverilog
+`ifndef TOP_TEST_PKG_SV
+`define TOP_TEST_PKG_SV
+
+package top_test_pkg;
+
+  `include "uvm_macros.svh"
+  import uvm_pkg::*;
+  `include "top_test.sv"
+
+endpackage : top_test_pkg
+
+`endif // TOP_TEST_PKG_SV
+```
 
 ### Note 02
 
 ([**Basic structure**](#basic-structure)) -
 
-UVM Cookbook - Factory Coding Convention 2: Constructor Defaults - pages 9-11.
+UVM Cookbook - pages 9-11
+
+For an `uvm_component` the **Factory Registration** and **Constructor Defaults** are the following:
 
 ```systemverilog
-function new(string name, uvm_component parent);
-  super.new(name, parent);
-endfunction : new
+class my_component extends uvm_component;
+
+  // Component factory registration macro
+  `uvm_component_utils(my_component)
+
+  // Component constructor defaults
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction : new
+
+endclass : my_component
 ```
 
+For an `uvm_object` the **Factory Registration** and **Constructor Defaults** are the following:
 
+```systemverilog
+class my_item extends uvm_sequence_item;
+
+  // Object factory registration macro
+  `uvm_object_utils(my_item)
+
+  // Object constructor defaults
+  function new(string name);
+    super.new(name);
+  endfunction : new
+  
+endclass : my_item
+```
+
+Is important to know that `uvm_sequence_item` extends from `uvm_transaction` that extends from `uvm_object`.
 
 ## References
 
