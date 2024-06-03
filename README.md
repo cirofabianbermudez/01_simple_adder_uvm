@@ -1,11 +1,18 @@
-# 01_simple_adder_uvm
+# Simple adder verification using UVM 1.2
 
-A simple adder implementation and verification using UVM 1.2.
+## RTL 
+
+1. Create a directory called `rtl` and inside create a file called `adder.sv` with the followig specifications:
+	1. Two 8-bit inputs called `A` and `B` and one 8-bit output called `C`.
+	2. Make it purely combinatinal.
 
 ## Basic structure
 
-1. Create an interface `adder_if.sv` for the adder in the `vrf/uvm/rtl` directory.
-1. Create a `tb.sv` file with the following in the `tb` directory:
+1. Create a directory called `vrf/uvm/uvcs/adder_uvc`, uvcs stands for "Universal Verification Componets".
+2. Create an interface `adder_if.sv` for the adder in the `vrf/uvm/uvcs/adder_uvc` directory.
+	1. Use header guards with the preprocessor directives `ifndef/define/endif`.
+	2. The interace must have three 8-bit signal `A`, `B` and `C`.
+3. Create a `tb.sv` file in the `vrf/uvm/tb` directory  with the following:
 	1. Import the UVM-1.2 library with `import uvm_pkg::*`
 	2. Instanciate the interface
 	3. Instanciate the adder
@@ -24,6 +31,8 @@ A simple adder implementation and verification using UVM 1.2.
 	2. It is a good practice to use header guard with the preprocessor directives `ifndef/define/endif`to avoid importing the package multiple times
 	2. Include `top_test.sv`
 4. In `tb.sv` import `top_test_pkg`
+
+> **Note 01:**  A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once.
 
 This is the bare minimum structure for the UVM testbench, you can run this code without errors but it doesnt do anything yet besides displaying a message, from here the idea is to add the remaining pieces like environment, driver, monitor, transaction and more. The `run_phase` task in `top_test.sv` is just displaying a message rigth now but it is in charge of starting the sequence that will stimulate the DUT later keep this in mind. To compile and run the code it is necessary to have a `Makefile` with everything configured, please refer to the `Makefile` provided. 
 
@@ -296,6 +305,18 @@ In the test `build_phase` of `top_test` or in a extended class, let say `test_fe
 set_type_override_by_type( adder_sequence_base::get_type(), adder_sequence_directed::get_type() );
 
 
-
 Note: when using `+ntb_random_seed_automatic` the seed appears in both the simulation log and the coverage report. 
+
+
+## References
+
+- [1] UVM Cookbook | Cookbook | Siemens Verification Academy, Verification Academy. Accessed: Jun. 03, 2024. [Online]. Available: https://verificationacademy.com/cookbook/uvm-universal-verification-methodology/verificationacademy.com/cookbook/uvm-universal-verification-methodology/
+
+- [2] S. Sutherland and T. Fitzpatrick, "UVM Rapid Adoption: A Practical Subset of UVM," in Proc. Design and Verification Conference (DVCon), March 2015. Available: https://dvcon-proceedings.org/wp-content/uploads/uvm-rapid-adoption-a-practical-subset-of-uvm-paper.pdf
+
+- [3] (IEEE Std 1800-2017) - IEEE Standard for SystemVerilog--Unified Hardware Design, Specification, and Verification Language. IEEE. doi: 10.1109/IEEESTD.2018.8299595.
+
+- [4] ClueLogic - Providing the clues to solve your verification problems. Accessed: Jun. 03, 2024. [Online]. Available: https://cluelogic.com/
+
+
 
