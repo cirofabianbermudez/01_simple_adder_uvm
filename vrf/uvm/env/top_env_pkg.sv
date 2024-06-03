@@ -7,6 +7,7 @@ package top_env_pkg;
   import uvm_pkg::*;
 
   import adder_pkg::*;
+  `include "top_scoreboard.sv"
   `include "top_env.sv"
 
 endpackage : top_env_pkg

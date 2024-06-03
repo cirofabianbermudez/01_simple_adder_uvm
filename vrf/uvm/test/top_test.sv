@@ -22,6 +22,8 @@ endfunction : new
 
 
 function void top_test::build_phase(uvm_phase phase);
+  // Override example but it is better to extend the test and make build_phase virtual can call the super.build_phase
+  //set_type_override_by_type( adder_sequence_base::get_type(), adder_sequence_directed::get_type() );
   env = top_env::type_id::create("env", this);
   `uvm_info(get_type_name(), "env created", UVM_MEDIUM)
 endfunction : build_phase

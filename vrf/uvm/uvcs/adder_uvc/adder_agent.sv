@@ -5,6 +5,8 @@ class adder_agent extends uvm_agent;
 
   `uvm_component_utils(adder_agent)
 
+  uvm_analysis_port #(adder_sequence_item) analysis_port;
+
   adder_sequencer sqr;
   adder_driver    drv;
   adder_monitor   mon;
@@ -43,6 +45,8 @@ function void adder_agent::build_phase(uvm_phase phase);
     cov = adder_coverage::type_id::create("cov",this);
   end
 
+  analysis_port = new("analysis_port", this);
+
 endfunction : build_phase
 
 
@@ -56,6 +60,8 @@ function void adder_agent::connect_phase(uvm_phase phase);
   if (cfg.coverage_enable) begin
     mon.analysis_port.connect(cov.analysis_export);
   end
+
+    mon.analysis_port.connect(this.analysis_port);
 
 endfunction : connect_phase
 

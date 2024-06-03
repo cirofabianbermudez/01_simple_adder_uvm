@@ -38,7 +38,7 @@ SIM_OPTS = +UVM_TESTNAME=$(TEST) +UVM_VERBOSITY=$(VERBOSITY) -l simv.log \
 
 .PHONY: version compile sim random clean help
 
-all: compile random coverage
+all: compile random
 
 version:
 	vcs -ID

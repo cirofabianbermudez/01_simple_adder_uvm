@@ -25,7 +25,7 @@ class adder_coverage extends uvm_subscriber #(adder_sequence_item);
 
   extern function new(string name, uvm_component parent);
   extern function void build_phase(uvm_phase phase);
-  extern function void write(input adder_sequence_item t);
+  extern function void write(adder_sequence_item t);
   extern function void report_phase(uvm_phase phase);
 
 endclass : adder_coverage
@@ -45,13 +45,13 @@ function void adder_coverage::build_phase(uvm_phase phase);
 endfunction : build_phase
 
 
-function void adder_coverage::write(input adder_sequence_item t);
+function void adder_coverage::write(adder_sequence_item t);
   if (cfg.coverage_enable) begin
     trans = t;
     adder_cov.sample();
     if (adder_cov.get_inst_coverage() >= 80) begin
       is_covered = 1;
-		  `uvm_info(get_type_name(), "80% Coverage reached", UVM_MEDIUM)
+		  //`uvm_info(get_type_name(), "80% Coverage reached", UVM_MEDIUM)
     end
   end
 endfunction : write
