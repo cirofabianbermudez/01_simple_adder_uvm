@@ -45,7 +45,10 @@
 > A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once. Helps maintain consistency, encapsulation and performance. It is recommended to use it in all the `.sv` files with the exception of `tb.sv`.
 
 
-
+> [!Note] Callout can have an _optional_ title
+> Callouts can also be nested:
+> > [!Hint]- You can also create foldable callouts with `+` or `-`
+> > This is hidden until unfolded.
 
 
 > **Note: 02**
