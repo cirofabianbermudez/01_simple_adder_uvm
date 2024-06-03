@@ -41,7 +41,7 @@
 6. Finally open `tb.sv` which is inside `vrf/uvm/tb` and import `top_test_pkg`, use `import top_test_pkg::*;`.
 
 
-> [!Note]
+> [!Note] Note 01
 > A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once. Helps maintain consistency, encapsulation and performance. It is recommended to use it in all the `.sv` files with the exception of `tb.sv`.
 
 
