@@ -10,7 +10,7 @@
 
 1. Create a directory called `vrf/uvm/uvcs/adder_uvc`, vrf stand for "Verification" and uvcs stands for "Universal Verification Components".
 2. Create an interface `adder_if.sv` for the adder in the `vrf/uvm/uvcs/adder_uvc` directory.
-   1. Use header guards with the preprocessor directives `ifndef/define/endif` ([**Note 01**](#note-01)).
+   1. Add a header guard with the preprocessor directives `` `ifndef ``, `` `define ``, `` `endif ``. ([**Note 01**](#note-01))
    2. The interface must have three 8-bit signal `A`, `B` and `C`.
 3. Create a `tb.sv` file in the `vrf/uvm/tb` directory with the following:
    1. Create a module called `tb`.
@@ -29,7 +29,7 @@
    1. Add header guard.
    2. Create a class `top_test` that extends `uvm_test`.
    3. Register this class into the factory with the proper macro, in this case `` `uvm_component_utils(top_test) ``.
-   4. The factory requires a constructor. Create the proper constructor for a `uvm_component` ([**Note 02**](#note-02)).
+   4. The factory requires a constructor. Create the proper constructor for a `uvm_component`. ([**Note 02**](#note-02))
    5. Create a `run_phase()` task and:
       1. Raise and objection with `phase.raise_objection(this);`
       2. Call `` `uvm_info(get_type_name(), "Some message", UVM_MEDIUM) `` to display a message.
@@ -40,7 +40,10 @@
    3. Include `top_test.sv`, use `` `include "top_test.sv" ``.
 6. Finally open `tb.sv` which is inside `vrf/uvm/tb` and import `top_test_pkg`, use `import top_test_pkg::*;`.
 
-This is the bare minimum structure for a UVM testbench to work, you can run this code without errors but it does not do anything yet besides displaying a message. From here the goal is to add the remaining pieces like environment, agent, driver, monitor, sequencer, sequence, transaction and more. The `run_phase()` task in `top_test.sv` is just displaying a message right now but this part of the code is in charge of starting the sequence that will stimulate the DUT later, keep this in mind. To compile and run the code it is necessary to have a `Makefile` with everything configured, please refer to the `Makefile` provided. 
+This is the bare minimum structure for a UVM testbench to work, you can run this code without errors but it does not do anything yet besides displaying a message. From here the goal is to add the remaining pieces like environment, agent, driver, monitor, sequencer, sequence, transaction and more to make a complete UVM testbech. The `run_phase()` task in `top_test.sv` is just displaying a message right now but this part of the code is in charge of starting the sequence that will stimulate the DUT later, keep this in mind. UVM is based in **Phasing and Objections**. ([**Note 03**](#note-03))
+
+
+ To compile and run the code it is necessary to have a `Makefile` with everything configured, please refer to the `Makefile` provided.
 
 
 The structure of a UVM testbench is a top bottom aproach, however to we need define the bottom elements first.
@@ -339,6 +342,8 @@ endpackage : top_test_pkg
 `endif // TOP_TEST_PKG_SV
 ```
 
+This is the `top_test_pkg.sv`.
+
 ### Note 02
 
 ([**Basic structure**](#basic-structure)) -
@@ -378,6 +383,10 @@ endclass : my_item
 ```
 
 Is important to know that `uvm_sequence_item` extends from `uvm_transaction` that extends from `uvm_object`.
+
+### Note 03
+
+TODO: Explain phasing and objections here
 
 ## References
 
