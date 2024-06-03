@@ -4,13 +4,13 @@
 
 1. Create a directory called `rtl` and inside create a file called `adder.sv` with the followig specifications:
    1. Two 8-bit inputs called `A` and `B` and one 8-bit output called `C`.
-   2. Make it purely combinatinal.
+   2. Make it purely combinational.
 
 ## Basic structure
 
 1. Create a directory called `vrf/uvm/uvcs/adder_uvc`, vrf stand for "Verification" and uvcs stands for "Universal Verification Components".
 2. Create an interface `adder_if.sv` for the adder in the `vrf/uvm/uvcs/adder_uvc` directory.
-   1. Use header guards with the preprocessor directives `ifndef/define/endif` (**Note: 01**).
+   1. Use header guards with the preprocessor directives `ifndef/define/endif` ([**Note 01**](#note-01)).
    2. The interface must have three 8-bit signal `A`, `B` and `C`.
 3. Create a `tb.sv` file in the `vrf/uvm/tb` directory with the following:
    1. Create a module called `tb`.
@@ -28,43 +28,19 @@
 4. Create a `top_test.sv` file in the `vrf/uvm/test` directory.
    1. Add header guard.
    2. Create a class `top_test` that extends `uvm_test`.
-   3. Register this class into the factory with the proper macro, in this case `` `uvm_component_utils(top_test)``.
-   4. The factory requires a constructor. Create the proper constructor for a `uvm_component` (**Note: 02**).
+   3. Register this class into the factory with the proper macro, in this case `` `uvm_component_utils(top_test) ``.
+   4. The factory requires a constructor. Create the proper constructor for a `uvm_component` ([**Note 02**](#note-02)).
    5. Create a `run_phase()` task and:
       1. Raise and objection with `phase.raise_objection(this);`
       2. Call `` `uvm_info(get_type_name(), "Some message", UVM_MEDIUM) `` to display a message.
       3. Drop the objection with `phase.drop_objection(this);`
 5. Create a `top_test_pkg.sv` in the `vrf/uvm/test` directory.
    1. Add header guard.
-   2. Use `` `include "uvm_macro.svh" `` and `import uvm_pkg::*;` to get access to the UVM library and macros. You can open any of this files and see that they both have header guards.[^2]
-   3. Include `top_test.sv`, use `` `include "top_test.sv" ``.[^1]
+   2. Use `` `include "uvm_macro.svh" `` and `import uvm_pkg::*;` to get access to the UVM library and macros. You can open any of this files and see that they both have header guards.
+   3. Include `top_test.sv`, use `` `include "top_test.sv" ``.
 6. Finally open `tb.sv` which is inside `vrf/uvm/tb` and import `top_test_pkg`, use `import top_test_pkg::*;`.
 
-
-
-
-
-
-**Note: 02**
-UVM Cookbook - Factory Coding Convention 2: Constructor Defaults - pages 9-11.
-
-```systemverilog
-function new(string name, uvm_component parent);
-  super.new(name, parent);
-endfunction : new
-```
-
-[^1]: **Note: 01**
-A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once. Helps maintain consistency, encapsulation and performance. It is recommended to use it in all the `.sv` files with the exception of `tb.sv`.
-
-[^2]: **Note: 02**
-```systemverilog
-function new(string name, uvm_component parent);
-  super.new(name, parent);
-endfunction : new
-```
-
-This is the bare minimum structure for the UVM testbench, you can run this code without errors but it doesnt do anything yet besides displaying a message, from here the idea is to add the remaining pieces like environment, driver, monitor, transaction and more. The `run_phase` task in `top_test.sv` is just displaying a message rigth now but it is in charge of starting the sequence that will stimulate the DUT later keep this in mind. To compile and run the code it is necessary to have a `Makefile` with everything configured, please refer to the `Makefile` provided. 
+This is the bare minimum structure for a UVM testbench to work, you can run this code without errors but it does not do anything yet besides displaying a message. From here the goal is to add the remaining pieces like environment, agent, driver, monitor, sequencer, sequence, transaction and more. The `run_phase()` task in `top_test.sv` is just displaying a message right now but this part of the code is in charge of starting the sequence that will stimulate the DUT later, keep this in mind. To compile and run the code it is necessary to have a `Makefile` with everything configured, please refer to the `Makefile` provided. 
 
 
 The structure of a UVM testbench is a top bottom aproach, however to we need define the bottom elements first.
@@ -336,6 +312,28 @@ set_type_override_by_type( adder_sequence_base::get_type(), adder_sequence_direc
 
 
 Note: when using `+ntb_random_seed_automatic` the seed appears in both the simulation log and the coverage report. 
+
+
+## Notes
+
+### Note 01
+
+([**Basic structure**](#basic-structure)) -
+
+A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once. Helps maintain consistency, encapsulation and performance. It is recommended to use it in all the `.sv` files with the exception of `tb.sv`.
+
+### Note 02
+
+([**Basic structure**](#basic-structure)) -
+
+UVM Cookbook - Factory Coding Convention 2: Constructor Defaults - pages 9-11.
+
+```systemverilog
+function new(string name, uvm_component parent);
+  super.new(name, parent);
+endfunction : new
+```
+
 
 
 ## References
