@@ -8,7 +8,7 @@
 
 ## Basic structure
 
-1. Create a directory called `vrf/uvm/uvcs/adder_uvc`, uvcs stands for "Universal Verification Componets".
+1. Create a directory called `vrf/uvm/uvcs/adder_uvc`, vrf stand for "Verification" and uvcs stands for "Universal Verification Componets".
 2. Create an interface `adder_if.sv` for the adder in the `vrf/uvm/uvcs/adder_uvc` directory.
 	1. Use header guards with the preprocessor directives `ifndef/define/endif`.
 	2. The interace must have three 8-bit signal `A`, `B` and `C`.
