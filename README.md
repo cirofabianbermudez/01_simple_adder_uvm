@@ -41,22 +41,27 @@
 6. Finally open `tb.sv` which is inside `vrf/uvm/tb` and import `top_test_pkg`, use `import top_test_pkg::*;`.
 
 
-> [!Note]
 > **Note: 01**
 > A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once. Helps maintain consistency, encapsulation and performance. It is recommended to use it in all the `.sv` files with the exception of `tb.sv`.
 
 
-> [!Note]
+
 > **Note: 02**
- **UVM Cookbook - UVM Basics - The UVM Factory - Factory Costructor Defaults - pages 9-11.**
+> **UVM Cookbook - Factory Coding Convention 2: Constructor Defaults - pages 9-11.**
+> ```systemverilog
+> function new(string name, uvm_component parent);
+>   super.new(name, parent);
+> endfunction : new
+```
+
+
+> **Note: 02**
+> **UVM Cookbook - Factory Coding Convention 2: Constructor Defaults - pages 9-11.**
 ```systemverilog
 function new(string name, uvm_component parent);
   super.new(name, parent);
 endfunction : new
 ```
-
-
-
 
 This is the bare minimum structure for the UVM testbench, you can run this code without errors but it doesnt do anything yet besides displaying a message, from here the idea is to add the remaining pieces like environment, driver, monitor, transaction and more. The `run_phase` task in `top_test.sv` is just displaying a message rigth now but it is in charge of starting the sequence that will stimulate the DUT later keep this in mind. To compile and run the code it is necessary to have a `Makefile` with everything configured, please refer to the `Makefile` provided. 
 
