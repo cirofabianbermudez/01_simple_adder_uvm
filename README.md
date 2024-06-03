@@ -36,33 +36,29 @@
       3. Drop the objection with `phase.drop_objection(this);`
 5. Create a `top_test_pkg.sv` in the `vrf/uvm/test` directory.
    1. Add header guard.
-   2. Use `` `include "uvm_macro.svh" `` and `import uvm_pkg::*;` to get access to the UVM library and macros. You can open any of this files and see that they both have header guards.
-   3. Include `top_test.sv`, use `` `include "top_test.sv" ``.
+   2. Use `` `include "uvm_macro.svh" `` and `import uvm_pkg::*;` to get access to the UVM library and macros. You can open any of this files and see that they both have header guards.[^2]
+   3. Include `top_test.sv`, use `` `include "top_test.sv" ``.[^1]
 6. Finally open `tb.sv` which is inside `vrf/uvm/tb` and import `top_test_pkg`, use `import top_test_pkg::*;`.
 
 
-> **Note: 01**
-> A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once. Helps maintain consistency, encapsulation and performance. It is recommended to use it in all the `.sv` files with the exception of `tb.sv`.
+**Note: 01**
+A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once. Helps maintain consistency, encapsulation and performance. It is recommended to use it in all the `.sv` files with the exception of `tb.sv`.
 
 
-
-> **Note: 02**
-> **UVM Cookbook - Factory Coding Convention 2: Constructor Defaults - pages 9-11.**
-> ```systemverilog
-> function new(string name, uvm_component parent);
->   super.new(name, parent);
-> endfunction : new
-> ```
-
-
-> **Note: 02**
-> **UVM Cookbook - Factory Coding Convention 2: Constructor Defaults - pages 9-11.**
+**Note: 02**
+UVM Cookbook - Factory Coding Convention 2: Constructor Defaults - pages 9-11.
 
 ```systemverilog
 function new(string name, uvm_component parent);
   super.new(name, parent);
 endfunction : new
 ```
+
+
+
+[^1]: Note 01: My reference.
+[^2]: To add line breaks within a footnote, prefix new lines with 2 spaces.
+  This is a second line.
 
 This is the bare minimum structure for the UVM testbench, you can run this code without errors but it doesnt do anything yet besides displaying a message, from here the idea is to add the remaining pieces like environment, driver, monitor, transaction and more. The `run_phase` task in `top_test.sv` is just displaying a message rigth now but it is in charge of starting the sequence that will stimulate the DUT later keep this in mind. To compile and run the code it is necessary to have a `Makefile` with everything configured, please refer to the `Makefile` provided. 
 
