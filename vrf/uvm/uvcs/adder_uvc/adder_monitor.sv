@@ -44,7 +44,7 @@ task adder_monitor::do_mon();
     trans.B = vif.B;
     trans.C = vif.C;
     analysis_port.write(trans);
-    `uvm_info(get_type_name(), $sformatf("A = %4d, B = %4d, C =  %4d", vif.A, vif.B, vif.C), UVM_MEDIUM)
+    //`uvm_info(get_type_name(), $sformatf("A = %4d, B = %4d, C =  %4d", vif.A, vif.B, vif.C), UVM_MEDIUM)
   end
 endtask : do_mon
 

@@ -1,6 +1,6 @@
 # 01_simple_adder_uvm
 
-A simple adder implementation and verification using UVM 1.2
+A simple adder implementation and verification using UVM 1.2.
 
 ## Basic structure
 
@@ -279,9 +279,7 @@ The primary role of a scoreboard in UVM is to verify that actual DUT outputs mat
 	3. Connect the the scoreboard port to the monitor port, in this step the are two options
 		1. Connect directly the scoreboard to the agent monitor port or
 		2. Create a pass through port from the monitor to the agent and then conect the agent port to the scoreboard
-
 The advantage of the second option is that it better encapsulate the agent and from the point of view of an environment writer it is easier to undertand, the environment writer does not need to know the inner implementation of the agent, the only think he must worry about is how to connect properly the agent port to the scoreboard.
-
 	4. Inside `top_env.sv`
 		1. Create a `connect_phase()` function and connect the agent analysis port to the scoreboard analysis export.   adder_agt.analysis_port.connect(scoreboard.analysis_export);
 	5. Open `adder_agent` and 
@@ -297,4 +295,7 @@ make PLUS=uvm_set_type_override=adder_sequence_base,adder_sequence_rand_no_repea
 In the test `build_phase` of `top_test` or in a extended class, let say `test_feat` of `top_test` you can put this override and select the test in the Makefile
 set_type_override_by_type( adder_sequence_base::get_type(), adder_sequence_directed::get_type() );
 
+
+
+Note: when using `+ntb_random_seed_automatic` the seed appears in both the simulation log and the coverage report. 
 
