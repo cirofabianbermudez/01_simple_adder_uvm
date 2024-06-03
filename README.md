@@ -41,15 +41,18 @@
 6. Finally open `tb.sv` which is inside `vrf/uvm/tb` and import `top_test_pkg`, use `import top_test_pkg::*;`.
 
 
-> [!NOTE] Note: 01
+> [!Note]
 > A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once. Helps maintain consistency, encapsulation and performance. It is recommended to use it in all the `.sv` files with the exception of `tb.sv`.
+
+
+
 
 
 > **Note: 02**
 > 
-> >```verilog
+> >```systemverilog
 > >function new(string name, uvm_component parent);
-> >	super.new(name, parent);
+> >		super.new(name, parent);
 > > endfunction : new
 > > ```
 > **UVM Cookbook - UVM Basics - The UVM Factory - Factory Costructor Defaults - pages 9-11.**
@@ -332,11 +335,11 @@ Note: when using `+ntb_random_seed_automatic` the seed appears in both the simul
 
 ## References
 
-- [1] UVM Cookbook | Cookbook | Siemens Verification Academy, Verification Academy. Accessed: Jun. 03, 2024. [Online]. Available: https://verificationacademy.com/cookbook/uvm-universal-verification-methodology/verificationacademy.com/cookbook/uvm-universal-verification-methodology/
+- [1] UVM Cookbook | Cookbook | Siemens Verification Academy, Verification Academy. Accessed: Jun. 03, 2024. [Online]. Available: https://verificationacademy.com/cookbook/uvm-universal-verification-methodology/
 
 - [2] S. Sutherland and T. Fitzpatrick, "UVM Rapid Adoption: A Practical Subset of UVM," in Proc. Design and Verification Conference (DVCon), March 2015. Available: https://dvcon-proceedings.org/wp-content/uploads/uvm-rapid-adoption-a-practical-subset-of-uvm-paper.pdf
 
-- [3] (IEEE Std 1800-2017) - IEEE Standard for SystemVerilog--Unified Hardware Design, Specification, and Verification Language. IEEE. doi: 10.1109/IEEESTD.2018.8299595.
+- [3] (IEEE Std 1800-2017) - IEEE Standard for SystemVerilog--Unified Hardware Design, Specification, and Verification Language. IEEE. doi: 10.1109/IEEESTD.2018.8299595. [Online]. Available: https://ieeexplore.ieee.org/document/8299595
 
 - [4] ClueLogic - Providing the clues to solve your verification problems. Accessed: Jun. 03, 2024. [Online]. Available: https://cluelogic.com/
 
