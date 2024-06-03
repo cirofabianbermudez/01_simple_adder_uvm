@@ -48,12 +48,13 @@
 
 > [!Note]
 > **Note: 02**
-> >```systemverilog
-> > function new(string name, uvm_component parent);
-> >	  super.new(name, parent);
-> > endfunction : new
-> > ```
-> **UVM Cookbook - UVM Basics - The UVM Factory - Factory Costructor Defaults - pages 9-11.**
+ **UVM Cookbook - UVM Basics - The UVM Factory - Factory Costructor Defaults - pages 9-11.**
+```systemverilog
+function new(string name, uvm_component parent);
+  super.new(name, parent);
+endfunction : new
+```
+
 
 
 
