@@ -2,25 +2,27 @@
 
 # VCS Flags
 
-| Flag                   | Description                                                                                                                                                                                                                                                            |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-full64`              | Enables compilation and simulation in 64-bit mode.                                                                                                                                                                                                                     |
-| `-sverilog`            | Enables the analysis of SystemVerilog source code.                                                                                                                                                                                                                     |
-| `-ntb_opts uvm-1.2`    | Load UVM-1.2                                                                                                                                                                                                                                                           |
-| `-lca`                 | Enable Limited Customer Availability (LCA) features.                                                                                                                                                                                                                   |
-| `-debug_access+all`    | Compiling/Elaborating the Design in the Full Debug Mode.                                                                                                                                                                                                               |
-| `-kdb`                 | Enables generating Verdi Knowledge Database (KDB).                                                                                                                                                                                                                     |
-| `+vcs+vcdpluson`       | Specifying a VCD file. A compile-time substitute for `$vcdpluson` option system task. This switch enables dumping for the entire design.                                                                                                                               |
-| `-timescale=1ns/100ps` | If only some source files contain the `` `timescale`` compiler directive and the ones that don't appear first on the vcs command line, use this option to specify the time scale for these source files. Fist argument is the time units and the second the precision. |
-| `-l comp.log`          | Specifies a log file for VCS compilation messages.                                                                                                                                                                                                                     |
-| `+incdir+<directory>`  | Specifies the directory or directories that VCS searches for include files used in the``\`include`` compiler directive.                                                                                                                                            |
-| `-f <filename>`        | Specifies a file that contains a list of pathnames to source files and compile-time options.                                                                                                                                                                           |
-| `-F <filename>`        | Same as the `-f` option but allows you to specify a path to the file and the source files listed in the file do not have to be absolute pathnames.                                                                                                                     |
+| Flag                   | Description                                                                                                                                                                                                                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-full64`              | Enables compilation and simulation in 64-bit mode.                                                                                                                                                                                                                      |
+| `-sverilog`            | Enables the analysis of SystemVerilog source code.                                                                                                                                                                                                                      |
+| `-ntb_opts uvm-1.2`    | Load UVM-1.2                                                                                                                                                                                                                                                            |
+| `-lca`                 | Enable Limited Customer Availability (LCA) features.                                                                                                                                                                                                                    |
+| `-debug_access+all`    | Compiling/Elaborating the Design in the Full Debug Mode.                                                                                                                                                                                                                |
+| `-kdb`                 | Enables generating Verdi Knowledge Database (KDB).                                                                                                                                                                                                                      |
+| `+vcs+vcdpluson`       | Specifying a VCD file. A compile-time substitute for `$vcdpluson` option system task. This switch enables dumping for the entire design.                                                                                                                                |
+| `-timescale=1ns/100ps` | If only some source files contain the `` `timescale `` compiler directive and the ones that don't appear first on the vcs command line, use this option to specify the time scale for these source files. Fist argument is the time units and the second the precision. |
+| `-l comp.log`          | Specifies a log file for VCS compilation messages.                                                                                                                                                                                                                      |
+| `+incdir+<directory>`  | Specifies the directory or directories that VCS searches for include files used in the`` `include `` compiler directive.                                                                                                                                                |
+| `-f <filename>`        | Specifies a file that contains a list of pathnames to source files and compile-time. options.                                                                                                                                                                           |
+| `-F <filename>`        | Same as the `-f` option but allows you to specify a path to the file and the source files listed in the file do not have to be absolute pathnames.                                                                                                                      |
 
 Example:
 
 ```bash
- vcs -full64 -sverilog -ntb_opts uvm-1.2 -lca -debug_access+all+reverse -kdb +vcs+vcdpluson -timescale=1ns/100ps +incdir+include test.sv -l comp.log
+ vcs -full64 -sverilog -ntb_opts uvm-1.2 \
+     -lca -debug_access+all+reverse -kdb +vcs+vcdpluson \
+     -timescale=1ns/100ps +incdir+include test.sv -l comp.log
 ```
 
 # SIMV Flags
@@ -40,5 +42,6 @@ Example:
 
 
 ```bash
-./simv +UVM_TESTNAME=base_test +UVM_VERBOSITY=UVM_MEDIUM -l simv.log +ntb_random_seed=1 +UVM_TR_RECORD +UVM_LOG_RECORD +UVM_NO_RELNOTES
+./simv +UVM_TESTNAME=base_test +UVM_VERBOSITY=UVM_MEDIUM -l simv.log \
+       +ntb_random_seed=1 +UVM_TR_RECORD +UVM_LOG_RECORD +UVM_NO_RELNOTES
 ```
