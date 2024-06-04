@@ -40,7 +40,9 @@
    3. Include `top_test.sv`, use `` `include "top_test.sv" ``.
 6. Finally open `tb.sv` which is inside `vrf/uvm/tb` and import `top_test_pkg`, use `import top_test_pkg::*;`.
 
-This is the bare minimum structure for a UVM testbench to work, you can run this code without errors but it does not do anything yet besides displaying a message. From here the goal is to add the remaining pieces like environment, agent, driver, monitor, sequencer, sequence, transaction and more to make a complete UVM testbech. 
+This is the bare minimum structure for a UVM testbench to work, you can run this code without errors but it does not do anything yet besides displaying a message. From here the goal is to add the remaining pieces like environment, agent, driver, monitor, sequencer, sequence, transaction and more to make a complete UVM testbech.
+
+## Inner workings
 
 The `run_phase()` task in `top_test.sv` seems to be just displaying a message right now but this part of the code is in charge of starting the sequence that will stimulate the DUT later, keep this in mind.
 
@@ -50,17 +52,31 @@ To start a UVM testbench, the `run_test()` method has to be called from the stat
 
 The `run_test()` method can be passed a string argument to define the default type name of an `uvm_component` derived class which is used as the root node of the testbench hierarchy. However, the `run_test()` method checks for a command line plusarg called `UVM_TESTNAME` and uses that plusarg string to lookup a factory registered `uvm_component`, overriding any default type name.
 
- To compile and run the code it is necessary to have a `Makefile` with everything configured, please refer to the `Makefile` provided and the [vcs/simv flags documentation ](docs/vcs_simv_flags.md).
+ To compile and run the code it is necessary to have a `Makefile` with everything configured, please refer to the [Makefile](Makefile) provided to create your own modifying it as necessary, see the [vcs/simv flags documentation](docs/vcs_simv_flags.md) file for more details.
 
+The structure of a UVM testbench is a top bottom abroach, components of a higher hierarchy create and handle components of lower hierarchy, however when writing a new UVC is a good idea to invert this order. Start modeling the transaction, then combine multiple transactions into a sequence, then a sequencer that passes the sequences into the driver and so on. It is better to take this abroach because components as drivers and sequences are parameterized with the transaction.
 
-The structure of a UVM testbench is a top bottom aproach, however to we need define the bottom elements first.
+The basic structure of a UVM testbech is the following:
+
+- Test
+  - Environment
+    - Scoreboard
+    - Agent
+      - Driver
+      - Monitor
+      - Coverage (Optional)
+      - Sequencer <- Sequence <- Transaction
+
+UVM has an immense number of classes, however not all of them are used frequently and other are reserve for internal functionality. From the user point of view, it is only necessary to know a reduce number of commonly use classes ([**Note 06**](#note-06)).
+
+Lets make or way through creating a UVC for a simple adder.
 
 ## Sequence item / Transaction
 
 1. Create a `adder_sequence_items.sv` file in the `vrf/uvm/uvcs/adder_uvc` directory
-	1. Create a class `adder_sequence_item` that extends `uvm_sequence_item`
-	2. Register this class in the factory with the proper macro, in this case a `uvm_object_utils`.
-	3. The factory requires a constructor, create the proper constructor for a uvm object
+   1. Create a class `adder_sequence_item` that extends `uvm_sequence_item`
+   2. Register this class in the factory with the proper macro, in this case a `uvm_object_utils`.
+   3. The factory requires a constructor, create the proper constructor for a uvm object
 2. Declare all atributes necessary to correctly represent the transaction
 3. Create the basic functions to handle the transaction
 	1. `do_copy()`, `do_compare()`, `do_print()`, `convert2string()`
@@ -422,7 +438,7 @@ $timeformat(-9, 0, "ns", 10);
 
 ### Note 04
 
-([**Basic structure**](#basic-structure)) -
+([**Basic structure**](#basic-structure)) - ([**Inner workings**](#inner-workings))
 
 For more information go to **UVM Cookbook**, pages 11-14.
 
@@ -503,9 +519,20 @@ It is fairly common to use `get_type_name()` as `string id` for `` `uvm_info()``
 
 When calling `` `uvm_warning() `` or `` `uvm_error() `` an internal counter is increase in each call, and the simulation continues. When calling `` `uvm_fatal() `` an internal counter is increase but simulation ends immediately.
 
-### Note 09
+### Note 06
 
-UVM Base Classes
+([**Basic structure**](#basic-structure)) - ([**Inner workings**](#inner-workings))
+
+The UVM class hierarchy is very large and if you are interested in learning more please refer to **PLACEHOLDER** where you will find a reduced but useful tree representation of the class hierarchy.
+
+This is a simple subset of commonly used UVM classes.
+
+Basic Classes
+
+- `uvm_object`
+- `uvm_component`
+
+Use to create the UVM testbench structure
 
 - `uvm_test`
 - `uvm_env`
@@ -513,13 +540,18 @@ UVM Base Classes
 - `uvm_driver`
 - `uvm_monitor`
 - `uvm_sequencer`
-- `uvm_sequence`
-- `uvm_sequence_item`
+- `uvm_scoreboard`
 - `uvm_subscriber`
+
+Use for TLM communication
+
 - `uvm_analysis_port`
 - `uvm_analysis_imp`
-- `uvm_object`
-- `uvm_component`
+
+Use for transitions
+
+- `uvm_sequence`
+- `uvm_sequence_item`
 
 
 ### Note 10
