@@ -2,13 +2,13 @@
 
 ## RTL
 
-1. Create a directory called `rtl` and inside create a file called `adder.sv` with the followig specifications:
+1. Create a directory called `rtl` and inside create a file called `adder.sv` with the following specifications:
    1. Two 8-bit inputs called `A` and `B` and one 8-bit output called `C`.
    2. Make it purely combinational.
 
 ## Basic structure
 
-1. Create a directory called `vrf/uvm/uvcs/adder_uvc`, vrf stand for "Verification" and uvcs stands for "Universal Verification Components".
+1. Create a directory called `vrf/uvm/uvcs/adder_uvc`, vrf stands for "Verification" and uvcs stands for "Universal Verification Components".
 2. Create an interface `adder_if.sv` for the adder in the `vrf/uvm/uvcs/adder_uvc` directory.
    1. Add a header guard with the preprocessor directives `` `ifndef ``, `` `define ``, `` `endif ``. ([**Note 01**](#note-01))
    2. The interface must have three 8-bit signal `A`, `B` and `C`.
@@ -17,22 +17,22 @@
    2. Import the UVM-1.2 library with `import uvm_pkg::*`.
    3. Instantiate the interface and call it `vif`.
    4. Instantiate the adder and call it `dut`.
-   5. Connect the adder and interface using the dot notation.
+   5. Connect the adder and interface using dot notation.
    6. Generate a basic clock using an `always` block.
       1. Name the clock signal `clk` and make it have a period of 10ns with an initial value of zero.
-   7. Generate a reset signals using a `initial begin` block.
+   7. Generate a reset signals using a `initial` block.
       1. Name the reset signal `rst` with an initial value of one and put it to zero after 10ns.
-   8. Create another initial block call and:
-      1. Call `$timeformat(-9, 0, "ns", 10);` to configure the simulation time format.
+   8. Create another `initial` block and:
+      1. Call `$timeformat(-9, 0, "ns", 10);` to configure the simulation time format. ([**Note 03**](#note-03))
       2. Next call the `run_test()` function, this is the UVM entry point.
 4. Create a `top_test.sv` file in the `vrf/uvm/test` directory.
    1. Add header guard.
    2. Create a class `top_test` that extends `uvm_test`.
    3. Register this class into the factory with the proper macro, in this case `` `uvm_component_utils(top_test) ``.
    4. The factory requires a constructor. Create the proper constructor for a `uvm_component`. ([**Note 02**](#note-02))
-   5. Create a `run_phase()` task and:
+   5. Create a `run_phase()` task and: ([**Note 04**](#note-04))
       1. Raise and objection with `phase.raise_objection(this);`
-      2. Call `` `uvm_info(get_type_name(), "Some message", UVM_MEDIUM) `` to display a message.
+      2. Call `` `uvm_info(get_type_name(), "Some message", UVM_MEDIUM) `` to display a message. ([**Note 05**](#note-05))
       3. Drop the objection with `phase.drop_objection(this);`
 5. Create a `top_test_pkg.sv` in the `vrf/uvm/test` directory.
    1. Add header guard.
@@ -40,10 +40,17 @@
    3. Include `top_test.sv`, use `` `include "top_test.sv" ``.
 6. Finally open `tb.sv` which is inside `vrf/uvm/tb` and import `top_test_pkg`, use `import top_test_pkg::*;`.
 
-This is the bare minimum structure for a UVM testbench to work, you can run this code without errors but it does not do anything yet besides displaying a message. From here the goal is to add the remaining pieces like environment, agent, driver, monitor, sequencer, sequence, transaction and more to make a complete UVM testbech. The `run_phase()` task in `top_test.sv` is just displaying a message right now but this part of the code is in charge of starting the sequence that will stimulate the DUT later, keep this in mind. UVM is based in **Phasing and Objections**. ([**Note 03**](#note-03))
+This is the bare minimum structure for a UVM testbench to work, you can run this code without errors but it does not do anything yet besides displaying a message. From here the goal is to add the remaining pieces like environment, agent, driver, monitor, sequencer, sequence, transaction and more to make a complete UVM testbech. 
 
+The `run_phase()` task in `top_test.sv` seems to be just displaying a message right now but this part of the code is in charge of starting the sequence that will stimulate the DUT later, keep this in mind.
 
- To compile and run the code it is necessary to have a `Makefile` with everything configured, please refer to the `Makefile` provided.
+UVM is based in **Phasing and Objections** ([**Note 04**](#note-04)).  A UVM testbench, if is using the standard phasing, has a number of zero time phases to build and connect the testbench, then a number of time consuming phases, and finally a number of zero time cleanup phases. End of test occurs when all of the time consuming phases have ended. Each phase ends when there are no longer any pending objections to that phase. So end-of-test in the UVM is controlled by managing phase objections. This is the reason why the first thing the `run_phase()` does is to raise an objection, it prevents the test to end, then displays a message and at the end drops the objection upon completion.
+
+To start a UVM testbench, the `run_test()` method has to be called from the static part of the testbench. It is usually called from within an `initial` block in the top level module of the testbench. Calling `run_test()` constructs the UVM environment root component and then initiates the UVM phasing.
+
+The `run_test()` method can be passed a string argument to define the default type name of an `uvm_component` derived class which is used as the root node of the testbench hierarchy. However, the `run_test()` method checks for a command line plusarg called `UVM_TESTNAME` and uses that plusarg string to lookup a factory registered `uvm_component`, overriding any default type name.
+
+ To compile and run the code it is necessary to have a `Makefile` with everything configured, please refer to the `Makefile` provided and the [vcs/simv flags documentation ](docs/vcs_simv_flags.md).
 
 
 The structure of a UVM testbench is a top bottom aproach, however to we need define the bottom elements first.
@@ -323,9 +330,9 @@ Note: when using `+ntb_random_seed_automatic` the seed appears in both the simul
 
 ([**Basic structure**](#basic-structure)) -
 
-A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once. Helps maintain consistency, encapsulation and improve performance. It is recommended to use it in all the `.sv` files with the exception of `tb.sv`. 
+A header guard is a preprocessor directive used in programming languages to prevent a header file from being included more than once. Helps maintain consistency, encapsulation and improve performance. It is recommended to use it in all the `.sv` files with the exception of `tb.sv`.
 
-For example:
+Example:
 
 ```systemverilog
 `ifndef TOP_TEST_PKG_SV
@@ -342,13 +349,13 @@ endpackage : top_test_pkg
 `endif // TOP_TEST_PKG_SV
 ```
 
-This is the `top_test_pkg.sv`.
+This is a simplify version of `top_test_pkg.sv`.
 
 ### Note 02
 
 ([**Basic structure**](#basic-structure)) -
 
-UVM Cookbook - pages 9-11
+For more information go to **UVM Cookbook**, pages 9-11.
 
 For an `uvm_component` the **Factory Registration** and **Constructor Defaults** are the following:
 
@@ -382,11 +389,150 @@ class my_item extends uvm_sequence_item;
 endclass : my_item
 ```
 
-Is important to know that `uvm_sequence_item` extends from `uvm_transaction` that extends from `uvm_object`.
+It is important to know that `uvm_sequence_item` extends from `uvm_transaction` that extends from `uvm_object`.
 
-### Note 03
+## Note 03
 
-TODO: Explain phasing and objections here
+([**Basic structure**](#basic-structure)) -
+
+For more information go to **IEEE Std 1800-2017**, page 595.
+
+The `$timeformat` system task performs the following two functions:
+
+- It specifies how the `%t` format specification reports time information for the `$write`, `$display`, `$strobe`, `$monitor`, `$fwrite`, `$fdisplay`, `$fstrobe`, and `$fmonitor` group of system tasks.
+- It specifies the time unit for delays entered interactively.
+
+Syntax:
+
+```systemverilog
+$timeformat(<unit_number>, <precision_number>, <suffix_string>, <minimum_field_width>);
+```
+
+- `<unit_number>`: is the smallest time precision argument of all the `` `timescale ``
+compiler directives in the source description. `0`->1s, `-3`->1ms, `-6`->1us, `-9`->1ns
+- `<precision_number>`: represents the number of fractional digits for the current timescale.
+- `<suffix_string>`: is an option to display the scale alongside the real time values.
+- `<minimum_field_width>`: is the amount of character that `%t` will have.
+  
+Example:
+
+```systemverilog
+$timeformat(-9, 0, "ns", 10);
+```
+
+### Note 04
+
+([**Basic structure**](#basic-structure)) -
+
+For more information go to **UVM Cookbook**, pages 11-14.
+
+In order to have a consistent testbench execution flow, the UVM uses phases to order the major steps that take place during simulation. There are three groups of phases, which are executed in the following order:
+
+1. Build phases - where the testbench is configured and constructed.
+2. Run-time phases - where time is consumed in running the testcase on the testbench.
+3. Clean up phases - where the results of the testcase are collected and reported.
+
+The `uvm_component` base class contains virtual methods which are called by each of the different phase methods and these are populated by the testbench component creator according to which phases the component participates in. Using the defined phases allows
+verification components to be developed in isolation, but still be interoperable since there is a common understanding of what should happen in each phase.
+
+```systemverilog
+// Build Phases
+extern function void build_phase(uvm_phase phase);                 // <- Essential
+extern function void connect_phase(uvm_phase phase);               // <- Essential
+extern function void end_of_elaboration_phase(uvm_phase phase);    // <- Good to use
+
+// Run-time Phases
+extern function void start_of_simulation_phase(uvm_phase phase);   
+extern task run_phase(uvm_phase phase);                            // <- Essential
+
+// Cleanup Phases
+extern function void extract_phase(uvm_phase phase);
+extern function void check_phase(uvm_phase phase);
+extern function void report_phase(uvm_phase phase);                // <- Good to use
+extern function void final_phase(uvm_phase phase);
+```
+
+In UVM, the `run_phase()` is the only time-consuming phase of execution. All execution of all components, including the test and environment, should be handled by
+`run_phase()`. In order to ensure that all of your desired transactions execute in your test case, you must tell UVM not to exit the `run_phase` until your desired stimuli complete. This is done using objections.
+
+The `raise_objection()` call must be made before the first nonblocking assignment is made in that phase.
+The phase method will continue until all raised objections are dropped. Dropping the objection upon
+completion of the sequence is usually sufficient to allow the run_phase to complete correctly.
+
+Example:
+
+```systemverilog
+task run_phase(uvm_phase phase);
+  phase.raise_objection(this);
+  ...
+  phase.drop_objection(this);
+endtask
+```
+
+### Note 05
+
+([**Basic structure**](#basic-structure)) -
+
+To displays messages UVM uses the following macros:
+
+```systemverilog
+`uvm_info(string id, string message, int verbosity)
+`uvm_warning(string id, string message)
+`uvm_error(string id, string message)
+`uvm_fatal(string id, string message)
+```
+
+There are six levels of verbosity:
+
+```systemverilog
+UVM_NOME
+UVM_LOW
+UVM_MEDIUM
+UVM_HIGH
+UVM_FULL
+UVM_DEGUG
+```
+
+You can select the verbosity from the command line with:
+
+```bash
++UVM_VERBOSITY=verbosity
+```
+
+It is fairly common to use `get_type_name()` as `string id` for `` `uvm_info()`` to track the source of the messages.
+
+When calling `` `uvm_warning() `` or `` `uvm_error() `` an internal counter is increase in each call, and the simulation continues. When calling `` `uvm_fatal() `` an internal counter is increase but simulation ends immediately.
+
+### Note 09
+
+UVM Base Classes
+
+- `uvm_test`
+- `uvm_env`
+- `uvm_agent`
+- `uvm_driver`
+- `uvm_monitor`
+- `uvm_sequencer`
+- `uvm_sequence`
+- `uvm_sequence_item`
+- `uvm_subscriber`
+- `uvm_analysis_port`
+- `uvm_analysis_imp`
+- `uvm_object`
+- `uvm_component`
+
+
+### Note 10
+
+
+
+
+### Note 11
+
+
+
+
+
 
 ## References
 
