@@ -28,8 +28,8 @@
 4. Create a `top_test.sv` file in the `vrf/uvm/test` directory.
    1. Add header guard.
    2. Create a class `top_test` that extends `uvm_test`.
-   3. Register this class into the factory with the proper macro, in this case `` `uvm_component_utils(top_test) ``.
-   4. The factory requires a constructor. Create the proper constructor for a `uvm_component`. ([**Note 02**](#note-02))
+   3. Register this class into the factory using the appropriate macro, which in this case `` `uvm_component_utils(top_test) ``.
+   4. The factory requires a constructor. Create the appropriate constructor for a `uvm_component`. ([**Note 02**](#note-02))
    5. Create a `run_phase()` task and: ([**Note 04**](#note-04))
       1. Raise and objection with `phase.raise_objection(this);`
       2. Call `` `uvm_info(get_type_name(), "Some message", UVM_MEDIUM) `` to display a message. ([**Note 05**](#note-05))
@@ -71,35 +71,59 @@ UVM has an immense number of classes, however not all of them are used frequentl
 
 Lets make or way through creating a UVC for a simple adder.
 
-## Sequence item / Transaction
+## Sequence item (Transaction)
+
+The sequence item or transaction is the the foundation on which sequences are built, some care needs to be taken with their design. Sequence items content is determined by the information that the driver needs in order to execute a pin level transaction.
 
 1. Create a `adder_sequence_items.sv` file in the `vrf/uvm/uvcs/adder_uvc` directory
-   1. Create a class `adder_sequence_item` that extends `uvm_sequence_item`
-   2. Register this class in the factory with the proper macro, in this case a `uvm_object_utils`.
-   3. The factory requires a constructor, create the proper constructor for a uvm object
-2. Declare all atributes necessary to correctly represent the transaction
-3. Create the basic functions to handle the transaction
-	1. `do_copy()`, `do_compare()`, `do_print()`, `convert2string()`
-	2. UVM Cookbook recommendation, don't use the utility macros to generate the transaction functions.
-4. Create some constraints to the signals if necessary.
+   1. Add header guard.
+   2. Create a class `adder_sequence_item` that extends `uvm_sequence_item`
+   3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_object_utils(adder_sequence_item) ``.
+   4. The factory requires a constructor. Create the appropriate constructor for a `uvm_object`. ([**Note 02**](#note-02))
+2. Declare the necessary attributes to correctly model the transaction.
+   1. `A` and `B` must be declared as `rand` so that they take advantage of randomization.
+   2. For example `rand logic [7:0] A`.
+   3. The output `C` does not need to be random.
+3. Create the basic functions to handle transactions. ([**Note 07**](#note-07))
+   1. `do_copy()`, `do_compare()`, `do_print()`, `convert2string()`.
+   2. UVM Cookbook recommends not using UVM filed macros to generate the transaction functions.
+   3. For more information go to **UVM Cookbook**, page 515.
+4. Create a `constraint` block, this is optional. ([**Note 08**](#note-08))
 
 ## Sequencer
 
-1. Create a `adder_sequencer.sv` file in the `vrf/uvm/uvcs/adder_uvc` directory
-2. Use a `typedef uvm_sequencer` parameterized with the transaction
+A sequencer serves as a router of sequence_items (transactions). The sequencer can receive sequence_items from any number of sequences (stimulus generators) and route these items to the agent’s driver. Sequencers are extended from the `uvm_sequencer` base class, and inherit all necessary routing and arbitration functionality from this base class. The `uvm_sequencer` base class contains a type parameter that defines what type of
+sequence_item class the sequencer can route. This parameter must be defined, in order to specialize the sequencer to match the driver to which it will be connected.
+
+Since the `uvm_sequencer` base class functionality does not need to be extended, it is possible to use the base class directly within an agent, by simply defining the sequencer’s type parameter to a specific sequence_item type. Never the less, it is a good idea to have this code separated in its own file.
+
+1. Create a `adder_sequencer.sv` file in the `vrf/uvm/uvcs/adder_uvc` directory.
+2. Add header guard.
+3. Use a `typedef`  declaration with `uvm_sequencer` parameterized with `adder_sequence_items` and call it `adder_sequencer`.
+   - Translated into code: `typedef uvm_sequencer #(adder_sequence_item) adder_sequencer;`
+
 
 ## Sequence
 
+A sequence is an example of what software engineers call a 'functor', in other words it is an object that is used as a method. An UVM sequence contains a task called `body()`. When a sequence is used, it is created, then the `body()` method is executed, and then the sequence can be discarded. Unlike an `uvm_component`, a sequence has a limited simulation life-time and can therefore can be described as a transient object. The sequence `body()` method can be used to create and execute other sequences, or it can be used to generate sequence_item objects which are sent to a driver component, via a sequencer component.
+
+The sequence_item objects are also transient objects, and they contain the information that a driver needs in order to carry out a pin level interaction with a DUT.  The fact that sequences and sequence_items are objects means that they can be easily randomized to generate interesting stimulus.
+
+In the UVM sequence architecture, sequences are responsible for the stimulus generation flow and send sequence_items to a driver via a sequencer component.
+
 1. Create a `adder_sequence_base.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
-	1. Create a class `adder_sequence_base` that extends `uvm_sequence` parameterized with the transaction
-	2. Register this class in the factory with the proper macro, in this case a `uvm_object_utils`.
-	3. The factory requires a constructor, create the proper constructor for a uvm object
+   1. Add header guard.
+   2. Create a class `adder_sequence_base` that extends `uvm_sequence` parameterized with the transaction `adder_sequence_items`.
+   3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_object_utils(adder_sequence_base) ``.
+   4. The factory requires a constructor. Create the appropriate constructor for a `uvm_object`.
 2. Create a task called `body()`, inside this task:
-	1. Open a `repeat(10)` loop and inside
-	2. Instanciate a `adder_sequence_item` using the uvm mechanism `::type_id::create()` called `req`
-	3. Call `start_item(req)`
-	4. Randomize the sequence
-	5. Call `finish_item(req)`
+   1. Open a `repeat(10)` loop and inside:
+   2. Instantiate an `adder_sequence_item` object called `req` using the UVM creation mechanism.
+      - Translated into code: `req = adder_sequence_item::type_id::create("req");`
+      - It is not necessary to declare an `req` attribute because this is automatically done by `uvm_sequence`.
+   3. Call `start_item(req)`.
+   4. Randomize the sequence with `req.randomize()`, optionally check for errors and display an error message. ([**Note 09**](#note-09))
+   5. Call `finish_item(req)`
 	
 ## Driver
 
@@ -127,6 +151,8 @@ Lets make or way through creating a UVC for a simple adder.
 
 ## Environment
 
+
+
 1. Create a `top_env.sv` in the `vrf/uvm/env` directory
 	1. Create a class `top_env` that extends `uvm_env`
 	2. Register this class in the factory with the proper macro, in this case a `uvm_component_utils`.
@@ -136,6 +162,14 @@ Lets make or way through creating a UVC for a simple adder.
 	1. Instanciate the agent using the uvm mechanism `::type_id::create()`
 
 ## Test
+
+The UVM test has several responsibilities:
+
+- Get the virtual interface handle(s) from the configuration database.
+- Instantiate the UVM environment.
+- Use the configuration database to pass the virtual interface handle(s) and other information down to the environment.
+- Instantiate and start any sequences necessary for the test case.
+- Manage phase objections, to ensure the test successfully completes.
 
 1. Open `top_test.sv` and declare an atribute, `top_env` called `env`
 2. Create a `void build_phase` function and inside
@@ -369,9 +403,9 @@ This is a simplify version of `top_test_pkg.sv`.
 
 ### Note 02
 
-([**Basic structure**](#basic-structure)) -
+([**Basic structure**](#basic-structure)) - ([**Sequence item**](#sequence-item-transaction))
 
-For more information go to **UVM Cookbook**, pages 9-11.
+For more information go to **UVM Cookbook**, pages 9-10.
 
 For an `uvm_component` the **Factory Registration** and **Constructor Defaults** are the following:
 
@@ -554,17 +588,112 @@ Use for transitions
 - `uvm_sequence_item`
 
 
-### Note 10
+### Note 07
+
+([**Sequence item**](#sequence-item-transaction))
+
+Example of functions to handle transactions for the `adder_sequence_item.sv` based on **Doulos Easier UVM Code Generator**.
+
+```systemverilog
+function void adder_sequence_item::do_copy(uvm_object rhs);
+  adder_sequence_item rhs_;
+  if (!$cast(rhs_, rhs))
+    `uvm_fatal(get_type_name(), "Cast of rhs object failed")
+  super.do_copy(rhs);
+  A = rhs_.A;
+  B = rhs_.B;
+  C = rhs_.C;   
+endfunction : do_copy
 
 
+function bit adder_sequence_item::do_compare(uvm_object rhs, uvm_comparer comparer);
+  bit result;
+  adder_sequence_item rhs_;
+  if (!$cast(rhs_, rhs))
+    `uvm_fatal(get_type_name(), "Cast of rhs object failed")
+  result = super.do_compare(rhs, comparer);
+  result &= (A == rhs_.A);
+  result &= (B == rhs_.B);
+  result &= (C == rhs_.C);
+  return result;
+endfunction : do_compare
 
 
-### Note 11
+function void adder_sequence_item::do_print(uvm_printer printer);
+  if (printer.knobs.sprint == 0)
+    `uvm_info(get_type_name(), convert2string(), UVM_MEDIUM)
+  else
+    printer.m_string = convert2string();
+endfunction : do_print
 
 
+function string adder_sequence_item::convert2string();
+  string s;
+  $sformat(s, "%s\n", super.convert2string());
+  $sformat(s, {"%s\n",
+    "A = 'h%0h  'd%0d\n", 
+    "B = 'h%0h  'd%0d\n", 
+    "C = 'h%0h  'd%0d\n"},
+    get_full_name(), A, A, B, B, C, C);
+  return s;
+endfunction : convert2string
+```
 
+### Note 08
 
+([**Sequence item**](#sequence-item-transaction))
 
+Examples of constraints:
+
+It is recommended that the name of the constraint have the name of the transaction and an identifier representative of what it does.
+
+```systemverilog
+  // Example 1
+  constraint adder_seq_item_range_constraint {
+    A inside {[0:255]};
+    B inside {[0:255]};
+  }
+
+  // Example 2
+  constraint adder_seq_item_lessthan_constraint {
+    A < B;
+  }
+
+  // Example 3
+  constraint adder_seq_item_spacific_values_constraint {
+    A inside {10, 20, 100, 200};
+    ! (B inside {10, 20, 100, 200} );
+  }
+
+  // Example 4 Total: 320 P(0) = 20/320   P(1) = 50/320  ... P(7) = 10/320
+  constraint adder_seq_item_dist_constraint {
+    A dist {
+      0     := 20, 
+      [1:5] := 50, 
+      6     := 40,
+      7     := 10
+    };
+  }
+```
+
+### Note 09
+
+([**Sequence**](#sequence))
+
+This is a simple example of the `body()` function for a sequence.
+
+```systemverilog
+task adder_sequence_base::body();
+  repeat(10) begin
+    req = adder_sequence_item::type_id::create("req");
+    start_item(req);
+    if ( !req.randomize() ) begin
+      `uvm_error(get_type_name(), "Failed to randomize transaction")
+    end
+    finish_item(req);
+  end
+endtask : body
+```
 
 ## References
 
@@ -576,5 +705,6 @@ Use for transitions
 
 - [4] ClueLogic - Providing the clues to solve your verification problems. Accessed: Jun. 03, 2024. [Online]. Available: https://cluelogic.com/
 
+- [5] “Easier UVM.” Accessed: Jun. 04, 2024. [Online]. Available: https://www.doulos.com/knowhow/systemverilog/uvm/easier-uvm/
 
-
+- [6] “UVM (Universal Verification Methodology).” Accessed: Jun. 04, 2024. [Online]. Available: https://www.accellera.org/downloads/standards/uvm
