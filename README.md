@@ -34,7 +34,7 @@
       1. Raise and objection with `phase.raise_objection(this);`
       2. Call `` `uvm_info(get_type_name(), "Some message", UVM_MEDIUM) `` to display a message. ([**Note 05**](#note-05))
       3. Drop the objection with `phase.drop_objection(this);`
-5. Create a `top_test_pkg.sv` in the `vrf/uvm/test` directory.
+5. Create a `top_test_pkg.sv` file in the `vrf/uvm/test` directory.
    1. Add header guard.
    2. Use `` `include "uvm_macro.svh" `` and `import uvm_pkg::*;` to get access to the UVM library and macros. You can open any of this files and see that they both have header guards.
    3. Include `top_test.sv`, use `` `include "top_test.sv" ``.
@@ -111,7 +111,7 @@ The sequence_item objects are also transient objects, and they contain the infor
 
 In the UVM sequence architecture, sequences are responsible for the stimulus generation flow and send sequence_items to a driver via a sequencer component.
 
-1. Create a `adder_sequence_base.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
+1. Create a `adder_sequence_base.sv` file in the `vrf/uvm/uvcs/adder_uvc` directory
    1. Add header guard.
    2. Create a class `adder_sequence_base` that extends `uvm_sequence` parameterized with the transaction `adder_sequence_items`.
    3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_object_utils(adder_sequence_base) ``.
@@ -132,7 +132,7 @@ The UVM driver is responsible for communicating at the transaction level with th
 
 Stimulus generation in the UVM relies on a coupling between sequences and drivers. A sequence can only be written when the characteristics of a driver are known, otherwise there is a potential for the sequence or the driver to get into a deadlock waiting for the other to provide an item.
 
-1. Create a `adder_driver.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
+1. Create a `adder_driver.sv` file in the `vrf/uvm/uvcs/adder_uvc` directory
    1. Add header guard.
    2. Create a class `adder_driver` that extends `uvm_driver` parameterized with the transaction `adder_sequence_items`.
    3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_component_utils(adder_driver) ``.
@@ -152,7 +152,7 @@ An agent contains three required components: a sequencer, driver and monitor. In
 
 Agents need to be configurable to meet the requirements for a specific test. The controls for configuring UVM components are often referred to as **knobs**. These knobs might have simple on/off values or the knobs might be set to a value, such as the number of transactions a sequence should generate. In the [Advanced Agent](#advanced-agent)  we will talk more about passive and active agents and configuration objects, but in the meantime we will focus on creating an agent as basic as possible.
 
-1. Create a `adder_agent.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
+1. Create a `adder_agent.sv` file in the `vrf/uvm/uvcs/adder_uvc` directory
    1. Add header guard.
    2. Create a class `adder_sequence_driver` that extends `uvm_driver` parameterized with the transaction `adder_sequence_items`.
    3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_component_utils(adder_driver)``.
@@ -178,7 +178,7 @@ A UVM environment encapsulates the structural aspects of a UVM testbench. A UVM 
 - Optionally, a coverage collector, which records transaction information for coverage analysis, it can also be inside the agent.
 - A configuration component, which allows the test to set up the environment and agent for specific test requirements.
 
-1. Create a `top_env.sv` in the `vrf/uvm/env` directory.
+1. Create a `top_env.sv` file in the `vrf/uvm/env` directory.
    1. Add header guard.
    2. Create a class `top_env` that extends `uvm_env`
    3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_component_utils(top_env) ``.
@@ -208,24 +208,34 @@ The UVM test has several responsibilities:
    3. Instantiate an `adder_sequence_base` called `seq` using the UVM creation mechanism.
    4. Call `seq.start(env.agt.sqr)`.
    5. Close the block with `end`.
+4. Create a `end_of_elaboration_phase()` function and print the topology and the factory overrides. ([**Note 11**](#note-11))
 
 ## Package for Adder UVC
 
+It is important to have all the files related to a single UVC inside a package.
 
+1. Create a `adder_pkg.sv` file in the `vrf/uvm/uvcs/adder_uvc` directory.
+   1. Add header guard.
+   2. Use `` `include "uvm_macro.svh" `` and `import uvm_pkg::*;`.
+   3. Include:
+      - `adder_sequence_item.sv`
+      - `adder_sequencer.sv`
+      - `adder_sequence_base.sv`
+      - `adder_driver.sv`
+      - `adder_agent.sv`
 
-1. Create a `adder_pkg.sv` file and include  `adder_sequence_item.sv`, `adder_sequencer.sv`, `adder_sequence_base.sv`, `adder_driver.sv`,  `adder_agent.sv`. 
-2. It is a good practice to use header guard with the preprocessor directives `ifndef/define/endif`to avoid importing the package multiple times
-3. Also it's a good practice to first include uvm_macros.svh and import uvm_pkg::*;, both of these already come with header guards. Some times you dont know the order in which the import and includes are read, for this reason you can include uvm_macros.svh and import uvm_pkg::* at the beggining of each package and be sure that this files are going to be called first and just one because of header guards.
+Sometimes, you may not know the order in which imports and includes are read. For this reason, you can include `uvm_macros.svh` and import `uvm_pkg::*` at the beginning of each package to ensure these files are called first and only once, thanks to header guards.
 
+## Package for Environment
 
-## Package for environment
-
-1. Create a `top_env_pkg.sv` file and import `adder_pkg.sv` and include `top_env.sv`. 
-2. It is a good practice to use header guard with the preprocessor directives `ifndef/define/endif`to avoid importing the package multiple times
-3. Also it's a good practice to first include uvm_macros.svh and import uvm_pkg::*;, both of these already come with header guards.
-
+1. Create a `top_env_pkg.sv` file `vrf/uvm/env` directory.
+   1. Add header guard.
+   2. Use `` `include "uvm_macro.svh" `` and `import uvm_pkg::*;`.
+2. Import `adder_pkg::*` and include `"top_env.sv"`.
 
 ## The UVM Test/Driver/Sequence synchronization
+
+This is the core of how it works, read carefully and try to understand each part. This is the key to understanding how transaction synchronization works.
 
 1. The test class raises and objection flag `phase.raise_objection(this)` and call `seq.start()` method, which invokes the sequence `body()` task. The `seq.start()` method blocks (waits at that point) until the `body()` task exits.
 
@@ -239,16 +249,20 @@ The UVM test has several responsibilities:
 
 6. After the sequence has completed generating stimulus, the sequence `body` exits, which unblocks the test's `start()` method. The test will then continue with its next statements, which includes dropping its objection flag and allowing the `run_phase` to end.
 
+## Makefile configuration
 
+The `Makefile` needs to be changed
 
-The `Makefile` needs to be changed, 
-1. Use `+incdir+` to point to each directory that contains a file that was used in an include directive, update `INCL_FILES` variable
-2. Add the package in order of apperance, use a bottom to top aproach, update `PKG_FILES` variable
+1. Use `+incdir+` to point to each directory that contains a file that was used in an include directive, update `INCL_FILES` variable.
+2. Add the package in order of appearance, use a bottom to top approach, update `PKG_FILES` variable
 
+## Last steps
 
-At this point the testbench is capable of generating the UVM testbench hireachy, create and start sequences from the `test_top`, pass the transactions inside the sequence throgh the driver, the sequencer handles that, and display the transction in the console. I know, a lot of work just to acomplish that, but later you will learn how to take advantage of randomization, overrides to make your job easier. Let say this structure is dificult to create and understand at the begginig, then you can reuse most of the code for many other projects. 
+At this point, the testbench can generate the UVM testbench hierarchy, create and start sequences from the test_top, pass transactions inside the sequence through the driver (handled by the sequencer), and display the transactions in the console. It may seem like a lot of work just to achieve this, but later you will learn how to leverage randomization and overrides to make your job easier. While this structure is difficult to create and understand initially, you can reuse most of the code for many other projects.
 
 ## Connect to the DUT
+
+The final step is to connect the driver and the DUT.
 
 1. Move `adder_if.sv` into `vrf/uvm/uvcs/adder_uvc` directory.
 	1. Do not include the interface in `adder_pkg.sv`, this is ilegal in SystemVerilog
@@ -734,6 +748,29 @@ endtask : body
 It is important to notice that it is necessary to surround the declaration and instantiation of `seq` and the call to `seq.start(env.adder_agt.sqr)` in a `begin`, `end` block. If you do not do it this way you will get an error.
 
 An alternative to avoid using the `begin`, `end` block is to declare and atribute `adder_sequence_base` called `seq` outside the `run_phase()` task, next to  `top_env env;` or before calling `phase.raise_objection(this)`.
+
+### Note 11
+
+([**Test**](#test))
+
+The object in UVM that read the `+UVM_TESTNAME` switch is the UVM execution manager `uvm_root` starts via `run_test()`. It makes use of the UVM factory to create a top test object from the class name provided.
+
+This top test object is called `uvm_test_top`. The `uvm_test_top` object sits at the top of the entire UVM test hierarchy. It is the root parent of all the UVM test components.
+
+Since the UVM execution manager is the creator of the object, it is also aware of the entire UVM component structural hierarchy from test on down.
+
+The UVM execution manager is a singleton object of the `uvm_root` class. You can retrieve the handle to this manager by calling `uvm_root::get()`. You can use this handle to print the test structural topology.
+
+It is also useful for debugging to see all the user classes registered in the UVM Factory. You can get this information by calling `uvm_factory::get().print()`.
+
+Example:
+
+```systemverilog
+function void top_test::end_of_elaboration_phase(uvm_phase phase);
+  uvm_root::get().print_topology();
+  uvm_factory::get().print();
+endfunction : end_of_elaboration_phase
+```
 
 ## References
 
