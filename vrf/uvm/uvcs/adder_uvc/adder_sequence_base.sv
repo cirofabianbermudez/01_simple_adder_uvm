@@ -5,6 +5,8 @@ class adder_sequence_base extends uvm_sequence #(adder_sequence_item);
 
   `uvm_object_utils(adder_sequence_base)
 
+  int n = 10;
+
   extern function new(string name = "");
   extern virtual task body();
 
@@ -17,7 +19,7 @@ endfunction : new
 
 
 task adder_sequence_base::body();
-  repeat(10) begin
+  repeat(n) begin
     req = adder_sequence_item::type_id::create("req");
     //`uvm_info(get_type_name(), "New transaction generated", UVM_MEDIUM);
     start_item(req);

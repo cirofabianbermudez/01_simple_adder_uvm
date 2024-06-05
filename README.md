@@ -116,8 +116,9 @@ In the UVM sequence architecture, sequences are responsible for the stimulus gen
    2. Create a class `adder_sequence_base` that extends `uvm_sequence` parameterized with the transaction `adder_sequence_items`.
    3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_object_utils(adder_sequence_base) ``.
    4. The factory requires a constructor. Create the appropriate constructor for a `uvm_object`.
+   5. Declare an `int` attribute called  `n` and initialize it with 10, this is a knob to control the how many transactions are going to be send.
 2. Create a task called `body()`, inside this task:
-   1. Open a `repeat(10)` loop and inside:
+   1. Open a `repeat(n)` loop and inside:
    2. Instantiate an `adder_sequence_item` object called `req` using the UVM creation mechanism.
       - Translated into code: `req = adder_sequence_item::type_id::create("req");`
       - It is not necessary to declare an `req` attribute because this is automatically done by `uvm_sequence`.
@@ -127,39 +128,65 @@ In the UVM sequence architecture, sequences are responsible for the stimulus gen
 	
 ## Driver
 
+The UVM driver is responsible for communicating at the transaction level with the sequence via TLM communication with the sequencer and converting between the sequence_item on the transaction side and pin-level activity in communicating with the DUT via a virtual interface.
+
+Stimulus generation in the UVM relies on a coupling between sequences and drivers. A sequence can only be written when the characteristics of a driver are known, otherwise there is a potential for the sequence or the driver to get into a deadlock waiting for the other to provide an item.
+
 1. Create a `adder_driver.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
-	1. Create a class `adder_driver` that extends `uvm_driver` parameterized with the transaction
-	2. Register this class in the factory with the proper macro, in this case a `uvm_component_utils`.
-	3. The factory requires a constructor, create the proper constructor for a uvm component
+   1. Add header guard.
+   2. Create a class `adder_driver` that extends `uvm_driver` parameterized with the transaction `adder_sequence_items`.
+   3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_component_utils(adder_driver) ``.
+   4. The factory requires a constructor. Create the appropriate constructor for a `uvm_component`.
 2. Create a `run_phase()` task and inside
-	1. Create a `forever` loop and inside
-	2. Call `seq_item_port.get_next_item(req);`
-	3. Call `uvm_info(get_type_name(), {"req item\n",req.sprint}, UVM_HIGH)`, this is temporal because using the monitor is the way to go
-	4. Call `seq_item_port.item_done();`
+   1. Create a `forever` loop
+   2. Call `seq_item_port.get_next_item(req);` to request (pull) a transaction.
+   3. Call `` `uvm_info(get_type_name(), {"req item\n",req.sprint}, UVM_HIGH) ``
+      - This is temporal, later the proper code will be added.
+   4. Call `seq_item_port.item_done();` to unblock the sequence.
 
 ## Agent
 
+A UVM agent is a low-level building block that is associated with a specific set of DUT I/O pins and the communication protocol for those pins. For example, the SPI bus to a DUT will have an agent for that set of ports.
+
+An agent contains three required components: a sequencer, driver and monitor. In addition, agents may contain an optional coverage collector component.
+
+Agents need to be configurable to meet the requirements for a specific test. The controls for configuring UVM components are often referred to as **knobs**. These knobs might have simple on/off values or the knobs might be set to a value, such as the number of transactions a sequence should generate. In the [Advanced Agent](#advanced-agent)  we will talk more about passive and active agents and configuration objects, but in the meantime we will focus on creating an agent as basic as possible.
+
 1. Create a `adder_agent.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
-	1. Create a class `adder_sequence_driver` that extends `uvm_driver` parameterized with the transaction
-	2. Register this class in the factory with the proper macro, in this case a `uvm_component_utils`.
-	3. The factory requires a constructor, create the proper constructor for a uvm component
-2. Declare two atributes, one to handle the `adder_sequencer` called `drv`and other to handle `adder_driver` called `sqr`
-3. Create a `void build_phase` function and inside
-	1. Instanciate the driver and the sequencer using the uvm mechanism `::type_id::create()`
-4. Create a `void connect_phase` function and connect the driver and the sequencer
-	2. `drv.seq_item_port.connect(sqr.seq_item_export);`
+   1. Add header guard.
+   2. Create a class `adder_sequence_driver` that extends `uvm_driver` parameterized with the transaction `adder_sequence_items`.
+   3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_component_utils(adder_driver)``.
+   4. The factory requires a constructor. Create the appropriate constructor for a `uvm_component`.
+   5. Declare two attributes
+      - one to handle the `adder_sequencer` called `sqr`.
+      - and other to handle the `adder_driver` called `drv`.
+2. Create a `build_phase()` function and inside:
+   1. Instantiate an `adder_sequencer` object called `sqr`using the UVM creation mechanism.
+      - Translated into code: `sqr = adder_sequencer::type_id::create("sqr", this);`
+   2. Instantiate an `adder_driver` object called `drv`using the UVM creation mechanism.
+      - Translated into code: `drv = adder_driver   ::type_id::create("drv", this);`
+3. Create a `connect_phase()` function and connect the driver and the sequencer.
+   - Translated into code: `drv.seq_item_port.connect(sqr.seq_item_export);`
+   - `seq_item_port` and `seq_item_export` are built-in into the `uvm_driver` and `uvm_sequencer` classes.
 
 ## Environment
 
+A UVM environment encapsulates the structural aspects of a UVM testbench. A UVM environment contains:
 
+- One or more agents, each of which handles driving DUT inputs and  monitoring DUT input and output activity on a specific DUT interface.
+- A scoreboard, which handles verifying DUT responses to stimulus
+- Optionally, a coverage collector, which records transaction information for coverage analysis, it can also be inside the agent.
+- A configuration component, which allows the test to set up the environment and agent for specific test requirements.
 
-1. Create a `top_env.sv` in the `vrf/uvm/env` directory
-	1. Create a class `top_env` that extends `uvm_env`
-	2. Register this class in the factory with the proper macro, in this case a `uvm_component_utils`.
-	3. The factory requires a constructor, create the proper constructor for a uvm component
-2. Declare an atribute, `adder_agent` called `agt`
-3. Create a `void build_phase` function and inside
-	1. Instanciate the agent using the uvm mechanism `::type_id::create()`
+1. Create a `top_env.sv` in the `vrf/uvm/env` directory.
+   1. Add header guard.
+   2. Create a class `top_env` that extends `uvm_env`
+   3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_component_utils(top_env) ``.
+   4. The factory requires a constructor. Create the appropriate constructor for a uvm_component.
+2. Declare an attribute, `adder_agent` called `adder_agt`
+3. Create a `build_phase()` function and inside
+   1. Instantiate an `adder_agent` object called `adder_agt` using the UVM creation mechanism.
+      - Translated into code: `adder_agt = adder_agent::type_id::create("adder_agt", this):`
 
 ## Test
 
@@ -171,15 +198,20 @@ The UVM test has several responsibilities:
 - Instantiate and start any sequences necessary for the test case.
 - Manage phase objections, to ensure the test successfully completes.
 
-1. Open `top_test.sv` and declare an atribute, `top_env` called `env`
-2. Create a `void build_phase` function and inside
-	1. Instanciate the environment using the uvm mechanism `::type_id::create()`
-3. Instanciate a sequence `adder_sequence_base` using the uvm mechanism `::type_id::create()` inside the `run_phase` called `seq` after the `raise_objection` 
-4. Call `seq.start(env.agt.sqr)`, IMPORTANT both the instantiation and the call must be inside a `begin end` block. 
-	1. Alternatively you can declare and atribute `adder_sequence_base ` called `seq`, 
-	2. Instanciate it using the uvm mechanism and call `seq.start(env.agt.sqr)`, in this way you do not need the `begin end` block
+1. Open `top_test.sv` and declare an attribute, `top_env` called `env`.
+2. Create a `build_phase()` function and inside
+   1. Instantiate and `top_env` object called `env` using the UVM creation mechanism.
+      - Translated to code: `env = top_env::type_id::create("env", this);`
+3. Inside the `run_phase()` task after `phase.raise_objection(this)`:
+   1. Open a `begin` block. ([**Note 10**](#note-10))
+   2. Declare a local attribute `adder_sequence_base` called `seq`.
+   3. Instantiate an `adder_sequence_base` called `seq` using the UVM creation mechanism.
+   4. Call `seq.start(env.agt.sqr)`.
+   5. Close the block with `end`.
 
 ## Package for Adder UVC
+
+
 
 1. Create a `adder_pkg.sv` file and include  `adder_sequence_item.sv`, `adder_sequencer.sv`, `adder_sequence_base.sv`, `adder_driver.sv`,  `adder_agent.sv`. 
 2. It is a good practice to use header guard with the preprocessor directives `ifndef/define/endif`to avoid importing the package multiple times
@@ -694,6 +726,14 @@ task adder_sequence_base::body();
   end
 endtask : body
 ```
+
+### Note 10
+
+([**Test**](#test))
+
+It is important to notice that it is necessary to surround the declaration and instantiation of `seq` and the call to `seq.start(env.adder_agt.sqr)` in a `begin`, `end` block. If you do not do it this way you will get an error.
+
+An alternative to avoid using the `begin`, `end` block is to declare and atribute `adder_sequence_base` called `seq` outside the `run_phase()` task, next to  `top_env env;` or before calling `phase.raise_objection(this)`.
 
 ## References
 
