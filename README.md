@@ -226,6 +226,8 @@ It is important to have all the files related to a single UVC inside a package.
 
 Sometimes, you may not know the order in which imports and includes are read. For this reason, you can include `uvm_macros.svh` and import `uvm_pkg::*` at the beginning of each package to ensure these files are called first and only once, thanks to header guards.
 
+Do not include the interface in `adder_pkg.sv`, this is illegal in SystemVerilog.
+
 ## Package for Environment
 
 1. Create a `top_env_pkg.sv` file `vrf/uvm/env` directory.
@@ -245,50 +247,52 @@ This is the core of how it works, read carefully and try to understand each part
 
 4. The sequence generates the transaction values and calls `finish_item()`, which sends the transaction to the driver. The sequence then blocks (waits) until the driver is finished with that transaction.
 
-5. The driver assigns the transaction values to the interface variables, and then calls the `seq_item_port.item_done()` method to unblock the sequence. The sequence can then repeat steps 2 through 5 to generate additionl stimulus.
+5. The driver assigns the transaction values to the interface variables, and then calls the `seq_item_port.item_done()` method to unblock the sequence. The sequence can then repeat steps 2 through 5 to generate additional stimulus.
 
 6. After the sequence has completed generating stimulus, the sequence `body` exits, which unblocks the test's `start()` method. The test will then continue with its next statements, which includes dropping its objection flag and allowing the `run_phase` to end.
 
 ## Makefile configuration
 
-The `Makefile` needs to be changed
+The `Makefile` needs to be changed.
 
 1. Use `+incdir+` to point to each directory that contains a file that was used in an include directive, update `INCL_FILES` variable.
-2. Add the package in order of appearance, use a bottom to top approach, update `PKG_FILES` variable
+2. Add the package in order of appearance, use a bottom to top approach, put first the files of lower hierarchy, update `PKG_FILES` variable.
 
 ## Last steps
 
-At this point, the testbench can generate the UVM testbench hierarchy, create and start sequences from the test_top, pass transactions inside the sequence through the driver (handled by the sequencer), and display the transactions in the console. It may seem like a lot of work just to achieve this, but later you will learn how to leverage randomization and overrides to make your job easier. While this structure is difficult to create and understand initially, you can reuse most of the code for many other projects.
+At this point, the testbench can generate the UVM testbench hierarchy, create and start sequences from the `test_top`, pass transactions inside the sequence through the driver (handled by the sequencer), and display the transactions in the console. It may seem like a lot of work just to achieve this, but later you will learn how to leverage randomization and overrides to make your job easier. While this structure is difficult to create and understand initially, you can reuse most of the code for many other projects.
 
 ## Connect to the DUT
 
-The final step is to connect the driver and the DUT.
+The final step is to connect the driver and the DUT. This is done using the SystemVerilog interface construct. You must make the
+instance of the interface, referred to as a **virtual interface**, available to the environment. This is done by using the UVM configuration database.
 
-1. Move `adder_if.sv` into `vrf/uvm/uvcs/adder_uvc` directory.
-	1. Do not include the interface in `adder_pkg.sv`, this is ilegal in SystemVerilog
-	2. It a good idea to keep all the files refer to the agent in one place
-2. In `tb.sv` make the instance of the interface, referred to as a `virtual interface`, available to the environment.
-	1. This is done using the UVM configuration database
-	2. Before the `run_test()` method call `uvm_config_db #(virtual adder_if)::set(null, "uvm_test_top.env.agt", "vif", vif);`
-	3. The instance name of `adder_if` if `vif`, could be any name
-	4. "uvm_test_top.env.agt" is the path where this configuration is available to be retrive using the `get` version of the `uvm_config_db` method, also module below the agt have access to this configuration.
-3. Declare an atribute, `virtual adder_if` called `vif`
-	1. Create a `build_phase` and inside
-	2. Retrive the configuration for the virsual interface and check for errors
-     ```
-		 if (!uvm_config_db#(virtual adder_if)::get(get_parent(), "", "vif", vif)) begin
-		  `uvm_fatal(get_name(), "Could not retrieve adder_if from config db")
-		end
-	```
+1. Open `tb.sv`.
+   1. Before the `run_test()` method use the UVM configuration database `set` method to define the virtual interface that the agent will use.
+      1. Translated into code: `uvm_config_db #(virtual adder_if)::set(null, "uvm_test_top.env.adder_agt", "vif", vif);`. (**[Note 12](#note-12)**)
+      2. `"uvm_test_top.env.adder_agt"` is the path where this configuration is available to be retrieve using the `get` version of the `uvm_config_db` method, also module below `adder_agt` have access to this configuration.
+2. Open `adder_driver.sv`.
+   1. Declare a `virtual adder_if` attribute and call it`vif`.
+   2. Create a `build_phase()` function and inside:
+   3. Use the UVM configuration database `get` method to retrieve the configuration for the virtual interface into `vif` and check for errors. (**[Note 12](#note-12)**)
+   4. Inside the `run_phase()` before `seq_item_port.get_next_item(req);`.
+   5. Comment the `` `uvm_info() `` method.
+   6. Assign the values of the `req` into the `vif` and add a small delay. It is a good practice to put this code into a separate task. (**[Note 13](#note-13)**)
+
+The testbench is now capable of communicating with the DUT and sending stimuli correctly. However, a UVM testbench should do more than just send stimuli and display the generated waveforms for manual analysis. It must automatically analyze whether the DUT responses are correct. To achieve this, we first need to observe the output using a monitor. Then, we must determine how many possible combinations of inputs have been exercised in the DUT, which is done using coverage. Finally, we check if the output is correct using a scoreboard.
 
 ## Monitor
-1. Create a `adder_monitor.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
-	1. Create a class `adder_monitor` that extends `uvm_monitor`
-	2. Register this class in the factory with the proper macro, in this case a `uvm_component_utils`.
-	3. The factory requires a constructor, create the proper constructor for a uvm component
-2. Declare an atribute, `virtual adder_if` called `vif`
-	1. Create a `build_phase` and inside
-	2. Retrive the configuration for the virtual interface and check for errors
+
+A UVM monitor observes the DUT inputs and outputs for a specific interface, captures the observed values into one or more sequence_items, and broadcasts handles to those sequence_items to other UVM components (such as a scoreboard and a coverage collector).
+
+1. Create a `adder_monitor.sv` file in the `vrf/uvm/uvcs/adder_uvc` directory.
+   1. Add header guard.
+   2. Create a class `adder_monitor` that extends `uvm_monitor`.
+   3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_component_utils(adder_monitor) ``.
+   4. The factory requires a constructor. Create the appropriate constructor for a `uvm_component`.
+   5. Declare a `virtual adder_if` attribute and called it `vif`.
+2. Create a `build_phase` and inside
+	1. Retrive the configuration for the virtual interface and check for errors
      ```
 		 if (!uvm_config_db#(virtual adder_if)::get(get_parent(), "", "vif", vif)) begin
 		  `uvm_fatal(get_name(), "Could not retrieve adder_if from config db")
@@ -314,7 +318,7 @@ The final step is to connect the driver and the DUT.
 	2. Instanciate the monitor using the uvm mechanism `::type_id::create()`
 8. In `adder_driver.sv`
 	1. Delete the uvm_info line inside the forever loop
-9. Do not forget to include `adder_monitor.sv` in `adder_pkg.sv`
+9.  Do not forget to include `adder_monitor.sv` in `adder_pkg.sv`
 
 
 ## Verdi support
@@ -770,6 +774,62 @@ function void top_test::end_of_elaboration_phase(uvm_phase phase);
   uvm_root::get().print_topology();
   uvm_factory::get().print();
 endfunction : end_of_elaboration_phase
+```
+
+### Note 12
+
+([**Connect to the DUT**](#connect-to-the-dut))
+
+The mechanism for configuring object properties is done using UVM Configuration Database
+
+Syntax:
+
+```systemverilog
+uvm_config_db #(type)::set(context, inst_name, field, value);
+```
+
+- `type`: Data type
+- `context`: Object context in which the setter resides
+- `inst_name`: Hierarchical instance name in context
+- `field`: Tag to set value
+- `value`: Value to set
+
+```systemverilog
+uvm_config_db #(type)::get(context, inst_name, field, value);
+```
+
+- `type`: Data type (Must match set)
+- `context`: Object context in which the target resides
+- `inst_name`: Hierarchical instance name in context
+- `field`: Tag to get value
+- `value`: Value to store value unchanged if not set
+
+Example
+
+```systemverilog
+// in tb.sv
+uvm_config_db #(virtual adder_if)::set(null, "uvm_test_top.env.adder_agt", "vif", vif);
+
+// in adder_driver.sv inside the build_phase
+if ( !uvm_config_db #(virtual adder_if)::get(get_parent(), "", "vif", vif) ) begin
+  `uvm_fatal(get_name(), "Could not retrieve adder_if from config db")
+end
+```
+
+If  `context` is `null` the `inst_name` must contain the full path.
+
+### Note 13
+
+This is the simplest code that a driver can have, directly assign the values of the transaction into the DUT I/O pins.
+
+([**Connect to the DUT**](#connect-to-the-dut))
+
+```systemverilog
+task adder_driver::do_drive();
+  vif.A <= req.A;
+  vif.B <= req.B;
+  #10;
+endtask : do_drive
 ```
 
 ## References
