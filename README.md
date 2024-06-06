@@ -183,7 +183,7 @@ A UVM environment encapsulates the structural aspects of a UVM testbench. A UVM 
    2. Create a class `top_env` that extends `uvm_env`
    3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_component_utils(top_env) ``.
    4. The factory requires a constructor. Create the appropriate constructor for a uvm_component.
-2. Declare an attribute, `adder_agent` called `adder_agt`
+2. Declare an attribute `adder_agent` called `adder_agt`
 3. Create a `build_phase()` function and inside
    1. Instantiate an `adder_agent` object called `adder_agt` using the UVM creation mechanism.
       - Translated into code: `adder_agt = adder_agent::type_id::create("adder_agt", this):`
@@ -198,7 +198,7 @@ The UVM test has several responsibilities:
 - Instantiate and start any sequences necessary for the test case.
 - Manage phase objections, to ensure the test successfully completes.
 
-1. Open `top_test.sv` and declare an attribute, `top_env` called `env`.
+1. Open `top_test.sv` and declare an attribute `top_env` called `env`.
 2. Create a `build_phase()` function and inside
    1. Instantiate and `top_env` object called `env` using the UVM creation mechanism.
       - Translated to code: `env = top_env::type_id::create("env", this);`
@@ -206,6 +206,7 @@ The UVM test has several responsibilities:
    1. Open a `begin` block. ([**Note 10**](#note-10))
    2. Declare a local attribute `adder_sequence_base` called `seq`.
    3. Instantiate an `adder_sequence_base` called `seq` using the UVM creation mechanism.
+      - Translated to code: `seq = adder_sequence_base::type_id::create("seq");`
    4. Call `seq.start(env.agt.sqr)`.
    5. Close the block with `end`.
 4. Create a `end_of_elaboration_phase()` function and print the topology and the factory overrides. ([**Note 11**](#note-11))
@@ -272,12 +273,11 @@ instance of the interface, referred to as a **virtual interface**, available to 
       1. Translated into code: `uvm_config_db #(virtual adder_if)::set(null, "uvm_test_top.env.adder_agt", "vif", vif);`. (**[Note 12](#note-12)**)
       2. `"uvm_test_top.env.adder_agt"` is the path where this configuration is available to be retrieve using the `get` version of the `uvm_config_db` method, also module below `adder_agt` have access to this configuration.
 2. Open `adder_driver.sv`.
-   1. Declare a `virtual adder_if` attribute and call it`vif`.
+   1. Declare a `virtual adder_if` attribute called `vif`.
    2. Create a `build_phase()` function and inside:
    3. Use the UVM configuration database `get` method to retrieve the configuration for the virtual interface into `vif` and check for errors. (**[Note 12](#note-12)**)
    4. Inside the `run_phase()` before `seq_item_port.get_next_item(req);`.
-   5. Comment the `` `uvm_info() `` method.
-   6. Assign the values of the `req` into the `vif` and add a small delay. It is a good practice to put this code into a separate task. (**[Note 13](#note-13)**)
+   5. Assign the values of the `req` into the `vif` and add a small delay. It is a good practice to put this code into a separate task. (**[Note 13](#note-13)**)
 
 The testbench is now capable of communicating with the DUT and sending stimuli correctly. However, a UVM testbench should do more than just send stimuli and display the generated waveforms for manual analysis. It must automatically analyze whether the DUT responses are correct. To achieve this, we first need to observe the output using a monitor. Then, we must determine how many possible combinations of inputs have been exercised in the DUT, which is done using coverage. Finally, we check if the output is correct using a scoreboard.
 
@@ -290,46 +290,36 @@ A UVM monitor observes the DUT inputs and outputs for a specific interface, capt
    2. Create a class `adder_monitor` that extends `uvm_monitor`.
    3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_component_utils(adder_monitor) ``.
    4. The factory requires a constructor. Create the appropriate constructor for a `uvm_component`.
-   5. Declare a `virtual adder_if` attribute and called it `vif`.
-2. Create a `build_phase` and inside
-	1. Retrive the configuration for the virtual interface and check for errors
-     ```
-		 if (!uvm_config_db#(virtual adder_if)::get(get_parent(), "", "vif", vif)) begin
-		  `uvm_fatal(get_name(), "Could not retrieve adder_if from config db")
-		end
-	```
-3. Declare an atribute `adder_sequence_item` called`trans`
-4. Declare an atribute  `uvm_analysis_port #(adder_sequence_item)` called `analysis_port`
-	1. Inside the `build_phase` after the error check instanciate the analysis port using a normal `new()` construct
-	2. `analysis_port = new("analysis_port", this);`
-5. Create a `run_phase` and inside instantiate `trans` using the uvm mechanism `::type_id::create()` called `trans`
-6. After the instantiation capture the values and write to the analysis port, here is an example code
-	```
-	  forever @(vif.C) begin
-		trans.A = vif.A;
-		trans.B = vif.B;
-		trans.C = vif.C;
-		analysis_port.write(trans);
-		`uvm_info(get_type_name(), $sformatf("%4d + %4d = %4d", vif.A, vif.B, vif.C), UVM_MEDIUM)
-	  end
-	```
-7. In `adder_agent.sv`
-	1. Declare an atribute `adder_monitor` called `mon`
-	2. Instanciate the monitor using the uvm mechanism `::type_id::create()`
-8. In `adder_driver.sv`
-	1. Delete the uvm_info line inside the forever loop
-9.  Do not forget to include `adder_monitor.sv` in `adder_pkg.sv`
-
+   5. Declare a `virtual adder_if` attribute called `vif`.
+   6. Declare a `adder_sequence_item` attribute called `trans`.
+   7. Declare a `uvm_analysis_port #(adder_sequence_item)` attribute called `analysis_port`.
+2. Create a `build_phase()` and inside:
+   1. Use the UVM configuration database `get` method to retrieve the configuration for the virtual interface into `vif` and check for errors. (**[Note 12](#note-12)**)
+   2. Instantiate `analysis_port` using the normal `new()` construct.
+      - Translated into code: `analysis_port = new("analysis_port", this);`
+      - This code can be also placed in the constructor after the `super.new(name, super);` call.
+3. Create a `run_phase()` task and inside
+   1. Instantiate an `adder_sequence_item` called `trans` using the UVM creation mechanism.
+      - Translated into code: `trans = adder_sequence_item::type_id::create("trans");`
+   2. Capture the values of `vif` into `trans` every time `vif.C` changes, you can use a `forever` loop, then call the `write()` method of the `analysis_port`. It is a good practice to put this code into a separate task. (**[Note 14](#note-14)**)
+   3. Use `` `uvm_info() `` to display the capture values.
+4. Open `adder_agent.sv`.
+   1. Declare a `adder_monitor` attribute called `mon`.
+   2. Inside the `build_phase()`.
+   3. Instantiate an `adder_monitor` called `mon` using the UVM creation mechanism.
+      - Translated into code: `mon = adder_monitor::type_id::create("mon", this);`.
+5. Open `adder_driver.sv`
+   1. Comment the `` `uvm_info() `` line.
+6. Do not forget to include `adder_monitor.sv` in `adder_pkg.sv`
 
 ## Verdi support
 
 1. Add put `$fsdbDumpvars;` as the first line inside the `initial` block in the `tb.sv`
 2. Make sure you have `-lca -debug_access+all+reverse -kdb +vcs+vcdpluson` in your flags
 
+## Advanced Agent
 
-## Advanced Agent 
-
-Sometimes the agent does not need to have a driver and a sequencer if the only thing you need is to monitor the DUT, when this happens the agent is a pasive agent, otherwise it is active. To acomplish that you can use a configuration object. 
+Sometimes the agent does not need to have a driver and a sequencer if the only thing you need is to monitor the DUT, when this happens the agent is a pasive agent, otherwise it is active. To acomplish that you can use a configuration object.
 
 1. Create a `adder_config.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
 	1. Create a class `adder_config` that extends `uvm_object`
@@ -832,6 +822,37 @@ task adder_driver::do_drive();
 endtask : do_drive
 ```
 
+### Note 14
+
+([**Monitor**](#monitor))
+
+This is the simplest code that a monitor can have, directly assign the values of the transaction into the DUT I/O pins.
+
+```systemverilog
+task adder_monitor::do_mon();
+  forever @(vif.C) begin
+    trans.A = vif.A;
+    trans.B = vif.B;
+    trans.C = vif.C;
+    analysis_port.write(trans);
+    //`uvm_info(get_type_name(), $sformatf("A = %4d, B = %4d, C =  %4d", vif.A, vif.B, vif.C), UVM_MEDIUM)
+  end
+endtask : do_mon
+```
+
+## Note 15
+
+([**Monitor**](#monitor))
+
+```systemverilog
+uvm_analysis_port #(adder_sequence_item) analysis_port;
+analysis_port = new("analysis_port", this);
+
+uvm_analysis_imp #(adder_sequence_ite) analysis_export;
+analysis_export = new("analysis_imp", this);
+```
+
+
 ## References
 
 - [1] UVM Cookbook | Cookbook | Siemens Verification Academy, Verification Academy. Accessed: Jun. 03, 2024. [Online]. Available: https://verificationacademy.com/cookbook/uvm-universal-verification-methodology/
@@ -845,3 +866,4 @@ endtask : do_drive
 - [5] “Easier UVM.” Accessed: Jun. 04, 2024. [Online]. Available: https://www.doulos.com/knowhow/systemverilog/uvm/easier-uvm/
 
 - [6] “UVM (Universal Verification Methodology).” Accessed: Jun. 04, 2024. [Online]. Available: https://www.accellera.org/downloads/standards/uvm
+
