@@ -24,6 +24,10 @@ endfunction : new
 
 function void top_env::build_phase(uvm_phase phase);
   build_adder_agent();
+
+  scoreboard = top_scoreboard::type_id::create("scoreboard", this);
+  `uvm_info(get_type_name(), "scoreboard created", UVM_MEDIUM)
+
 endfunction : build_phase
 
 
@@ -42,10 +46,6 @@ function void top_env::build_adder_agent();
 
   adder_agt = adder_agent::type_id::create("adder_agt", this);
   `uvm_info(get_type_name(), "agt created", UVM_MEDIUM)
-
-
-  scoreboard = top_scoreboard::type_id::create("scoreboard", this);
-  `uvm_info(get_type_name(), "scoreboard created", UVM_MEDIUM)
 
 endfunction : build_adder_agent
 

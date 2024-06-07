@@ -123,8 +123,8 @@ In the UVM sequence architecture, sequences are responsible for the stimulus gen
       - It is not necessary to declare an `req` attribute because this is automatically done by `uvm_sequence`.
    3. Call `start_item(req)`.
    4. Randomize the sequence with `req.randomize()`, optionally check for errors and display an error message. ([**Note 09**](#note-09))
-   5. Call `finish_item(req)`
- 
+   5. Call `finish_item(req)`.
+
 ## Driver
 
 The UVM driver is responsible for communicating at the transaction level with the sequence via TLM communication with the sequencer and converting between the sequence_item on the transaction side and pin-level activity in communicating with the DUT via a virtual interface.
@@ -291,7 +291,7 @@ A UVM monitor observes the DUT inputs and outputs for a specific interface, capt
    4. The factory requires a constructor. Create the appropriate constructor for a `uvm_component`.
    5. Declare a `virtual adder_if` attribute called `vif`.
    6. Declare a `adder_sequence_item` attribute called `trans`.
-   7. Declare a `uvm_analysis_port #(adder_sequence_item)` attribute called `analysis_port`.
+   7. Declare a `uvm_analysis_port #(adder_sequence_item)` attribute called `analysis_port`. (**[Note 15](#note-15)**)
 2. Create a `build_phase()` and inside:
    1. Use the UVM configuration database `get` method to retrieve the configuration for the virtual interface into `vif` and check for errors. (**[Note 12](#note-12)**)
    2. Instantiate `analysis_port` using the normal `new()` construct.
@@ -353,7 +353,7 @@ Another useful feature for the agent is tracking how much of the design has been
 1. Create a `adder_coverage.sv` file in the `vrf/uvm/uvcs/adder_uvc` directory.
    1. Add header guard.
    2. Create a class `adder_coverage` that extends `uvm_suscriber` parametrized with the transaction `adder_sequence_item`.
-   3. Register this class in the factory using the appropriate macro, which in this case is `uvm_component_utils(adder_coverage)`.
+   3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_component_utils(adder_coverage) ``.
    4. The factory requires a constructor. Create the appropriate constructor for a `uvm_component`.
    5. Declare an attribute `adder_config` called `cfg`.
    6. Declare an attribute `adder_sequence_item` called `trans`.
@@ -383,41 +383,64 @@ The implementation of the `write()` function must copy the sequence_item handle 
 
 ## Scoreboard
 
-The primary role of a scoreboard in UVM is to verify that actual DUT outputs match predicted output values, we can follow a similar implemetation as the coreverage.
+The primary role of a scoreboard in UVM is to verify that actual DUT outputs match predicted output values, we can follow a similar implementation as the coreverage.
 
-1. Create a `top_scoreboard.sv` in the `vrf/uvm/env` directory
- 1. Create a class `top_scoreboard` that extends `uvm_suscriber`
- 2. Register this class in the factory with the proper macro, in this case a `uvm_component_utils`.
- 3. The factory requires a constructor, create the proper constructor for a uvm object.
- 4. Declare an atribute `adder_sequence_item` called `trans`
- 5. Declare an atribute `int` called `num_passed` and another called `num_failed` initialize with zero.
-2. Create a `write()` method that is called from the monitor with `adder_sequence_item` call `t`as an argument
- 1. Copy the content of `t` into `trans`
- 2. Using and if statement check if the information of the monitor transaction is correct and increase the `num_passed` and `num_failed` accordingly
-3. Create a `report_phase()` function that displays the values of passed and frailed transactions.
-4. Open `top_env.sv`
- 1. Declare an atribute `top_scoreboard` called `scoreboard`;
- 2. Instantiate the scoreboard using the using the uvm mechanism `::type_id::create()` called `scoreboard`
- 3. Connect the the scoreboard port to the monitor port, in this step the are two options
-  1. Connect directly the scoreboard to the agent monitor port or
-  2. Create a pass through port from the monitor to the agent and then conect the agent port to the scoreboard
-The advantage of the second option is that it better encapsulate the agent and from the point of view of an environment writer it is easier to undertand, the environment writer does not need to know the inner implementation of the agent, the only think he must worry about is how to connect properly the agent port to the scoreboard.
- 4. Inside `top_env.sv`
-  1. Create a `connect_phase()` function and connect the agent analysis port to the scoreboard analysis export.   adder_agt.analysis_port.connect(scoreboard.analysis_export);
- 5. Open `adder_agent` and
-  1. Declare an atribute `uvm_analysis_port #(adder_sequence_item) analysis_port;`
-  2. Instantiate the analysis port in the `build_phase()` function
-  3. In the `connect_phase()` function connect the monitor analysis port and the agent analysis port
- 6. Add `top_scoreboard.sv` into the `top_env_pkg.sv`
+1. Create a `top_scoreboard.sv` file in the `vrf/uvm/env` directory
+   1. Add header guard.
+   2. Create a class `top_scoreboard` that extends `uvm_suscriber` parametrized with the transaction `adder_sequence_item`.
+   3. Register this class in the factory with the proper macro, which in this case is `` `uvm_component_utils(top_scoreboard) ``.
+   4. The factory requires a constructor. Create the appropriate constructor for a `uvm_component`.
+   5. Declare an attribute `adder_sequence_item` called `trans`.
+   6. Declare an attribute `int` called `num_passed` and another called `num_failed` initialize with zero.
+2. Create a `write()` function with an input of type `adder_sequence_item` called `t`.
+   1. Assign the value of `t` into `trans`.
+      2. Using and `if` statement check if the information of the monitor transaction is correct and increase the `num_passed` and `num_failed` accordingly.
+3. Create a `report_phase()` and inside.
+   1. Displays the values of `num_passed` and `num_failed` using the `` `uvm() `` macro.
+4. Open `top_env.sv`.
+   1. Declare an attribute `top_scoreboard` called `scoreboard`.
+   2. Inside the `build_phase()`.
+   3. Instantiate an `top_scoreboard` called `scoreboard` using the UVM creation mechanism.
+      - Translated into code: `scoreboard = top_scoreboard::type_id::create("scoreboard", this);`
+   4. In the `connect_phase()`.
+5. Connect the the scoreboard `analysis_export` to the `analysis_port`. There are two options.
+   1. Connect the scoreboard `analysis_export` directly to the monitor `analysis_port`.
+   2. Connect the scoreboard `analysis_export` to the agent pass-through  `analysis_port`.
 
-make PLUS=uvm_set_type_override=adder_sequence_base,adder_sequence_rand_no_repeat
+You can directly connect the `analysis_export` to the monitor's `analysis_port`, but this is not recommended. Users of the agent may not be familiar with its internal workings. Instead, it is preferable to create a pass-through port from the monitor to the agent before connecting it to the scoreboard. This approach encapsulates the agent more effectively and simplifies the environment writer's task. The environment writer only needs to connect the agent port to the scoreboard, without needing to understand the agent's internal implementation.
 
-In the test `build_phase` of `top_test` or in a extended class, let say `test_feat` of `top_test` you can put this override and select the test in the Makefile
-set_type_override_by_type( adder_sequence_base::get_type(), adder_sequence_directed::get_type() );
-
-Note: when using `+ntb_random_seed_automatic` the seed appears in both the simulation log and the coverage report.
+ 1. Inside `top_env.sv`.
+    1. Create a `connect_phase()` function and inside
+    2. Connect the agent `analysis_port` to the scoreboard `analysis_export`.
+       - Translated into code: `adder_agt.analysis_port.connect(scoreboard analysis_export);`
+ 2. Open `adder_agent.sv`.
+    1. Declare an attribute `uvm_analysis_port #(adder_sequence_item) analysis_port;`
+    2. Instantiate the analysis port in the `build_phase()` function . (**[Note 15](#note-15)**)
+    3. In the `connect_phase()` function connect the monitor analysis port and the agent analysis port
+       1. Translated into code: `mon.analysis_port.connect(this.analysis_port);`
+ 3. Add `top_scoreboard.sv` into the `top_env_pkg.sv`
 
 ## Overrides
+
+From the command line:
+
+```bash
+make PLUS=uvm_set_type_override=adder_sequence_base,adder_sequence_rand_no_repeat
+```
+
+From the test:
+
+In the test `build_phase()` of `top_test.sv` or in a extended class, let say `test_feat` of `top_test` you can put this override:
+
+```systemverilog
+set_type_override_by_type( adder_sequence_base::get_type(), adder_sequence_directed::get_type() );`
+```
+
+and select the test in the Makefile
+
+```
+UVM_TESTNAME=test_feat
+```
 
 ## Notes
 
@@ -858,18 +881,40 @@ endtask : do_mon
 
 ## Note 15
 
-([**Monitor**](#monitor)) - ([**Coverage**](#coverage))
+([**Monitor**](#monitor)) - ([**Coverage**](#coverage)) - ([**Scoreboard**](#scoreboard))
 
-TLM ports declarations.
+These ports are TLM analysis ports, which permit a one-to-many connection. This allows the handle to the sequence_item object containing the DUT input values to be passed to both the scoreboard and a coverage collector. The `uvm_analysis_port` is a parameterized class, which must be specialized to work with a specific sequence_item class type.
+
+The ports are constructed in the `build_phase()` of the monitor. Note that ports are constructed using the class
+`new()` constructor, instead of the factory.
+
+Each of these analysis imp exports must implement the `write()` method for its corresponding port.
 
 Example:
 
 ```systemverilog
 uvm_analysis_port #(adder_sequence_item) analysis_port;
+// inside the build_phase
 analysis_port = new("analysis_port", this);
 
 uvm_analysis_imp #(adder_sequence_item) analysis_export;
+// inside the build_phase
 analysis_export = new("analysis_imp", this);
+```
+
+If multiple `uvm_analysis_imp` in the same class are need it, because SystemVerilog language does not have function overloading, it can not differentiate from one `write()` function to the other. To solve this problem UVM provides a solution to this dilemma in the form of a macro called `` `uvm_analysis_imp_decl() ``.
+
+```systemverilog
+`uvm_analysis_imp_decl(_uvc1)
+uvm_analysis_imp_uvc1 #(adder_sequence_item, this) analysis_export_uvc1;
+// inside the build_phase
+analysis_export_uvc1 = new("analysis_export_uvc1", this);
+
+`uvm_analysis_imp_decl(_uvc2)
+uvm_analysis_imp_uvc1 #(adder_sequence_item, this) analysis_export_uvc2;
+// inside the build_phase
+analysis_export_uvc2 = new("analysis_export_uvc2", this);
+
 ```
 
 ## Note 16
@@ -881,19 +926,21 @@ Coverage group for adder.
 Example:
 
 ```systemverilog
-  covergroup adder_cov;
-    //option.per_instance = 1;
-    cp_A: coverpoint trans.A {
-      bins a_bins[] = { [0:255] };
-    }
-    cp_B: coverpoint trans.B {
-      bins b_bins[] = { [0:255] };
-    }
-    cp_cross: cross cp_A, cp_B;
-  endgroup
-
-
+covergroup adder_cov;
+   //option.per_instance = 1;
+   cp_A: coverpoint trans.A {
+   bins a_bins[] = { [0:255] };
+   }
+   cp_B: coverpoint trans.B {
+   bins b_bins[] = { [0:255] };
+   }
+   cp_cross: cross cp_A, cp_B;
+endgroup
 ```
+
+## Note 17
+
+When using `+ntb_random_seed_automatic` the seed appears in both the simulation log and the coverage report.
 
 ## References
 
