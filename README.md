@@ -102,7 +102,6 @@ Since the `uvm_sequencer` base class functionality does not need to be extended,
 3. Use a `typedef`  declaration with `uvm_sequencer` parameterized with `adder_sequence_items` and call it `adder_sequencer`.
    - Translated into code: `typedef uvm_sequencer #(adder_sequence_item) adder_sequencer;`
 
-
 ## Sequence
 
 A sequence is an example of what software engineers call a 'functor', in other words it is an object that is used as a method. An UVM sequence contains a task called `body()`. When a sequence is used, it is created, then the `body()` method is executed, and then the sequence can be discarded. Unlike an `uvm_component`, a sequence has a limited simulation life-time and can therefore can be described as a transient object. The sequence `body()` method can be used to create and execute other sequences, or it can be used to generate sequence_item objects which are sent to a driver component, via a sequencer component.
@@ -125,7 +124,7 @@ In the UVM sequence architecture, sequences are responsible for the stimulus gen
    3. Call `start_item(req)`.
    4. Randomize the sequence with `req.randomize()`, optionally check for errors and display an error message. ([**Note 09**](#note-09))
    5. Call `finish_item(req)`
-	
+ 
 ## Driver
 
 The UVM driver is responsible for communicating at the transaction level with the sequence via TLM communication with the sequencer and converting between the sequence_item on the transaction side and pin-level activity in communicating with the DUT via a virtual interface.
@@ -314,105 +313,111 @@ A UVM monitor observes the DUT inputs and outputs for a specific interface, capt
 
 ## Verdi support
 
-1. Add put `$fsdbDumpvars;` as the first line inside the `initial` block in the `tb.sv`
-2. Make sure you have `-lca -debug_access+all+reverse -kdb +vcs+vcdpluson` in your flags
+1. Add `$fsdbDumpvars;` as the first line inside the `initial` block in the `tb.sv` file.
+2. Make sure you have `-lca -debug_access+all+reverse -kdb +vcs+vcdpluson` in your `vcs` compilation flags.
 
 ## Advanced Agent
 
-Sometimes the agent does not need to have a driver and a sequencer if the only thing you need is to monitor the DUT, when this happens the agent is a pasive agent, otherwise it is active. To acomplish that you can use a configuration object.
+An agent may not require a driver and sequencer if its sole function is to monitor the DUT. In such cases, the agent is passive. When the agent performs other functions, it is active. You can manage this behavior using a configuration object.
 
-1. Create a `adder_config.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
-	1. Create a class `adder_config` that extends `uvm_object`
-	2. Register this class in the factory with the proper macro, in this case a `uvm_object_utils`.
-	3. The factory requires a constructor, create the proper constructor for a uvm object
-	4. Declare an atribute  `uvm_active_passive_enum` called `is_active` and assign a value of `UVM_ACTIVE`
-	5. Declare an atribute  `bit` called `coverage_enable`.
-2. Open `top_env.sv`
-	1. Declare an atribute  `adder_config` called `adder_agt_cfg`.
-	2. Create a void function called `build_adder_agent()` and inside
-	3. Instanciate the `adder_config` using the uvm mechanism `::type_id::create()` called `adder_agt_cfg`
-	4. Configure the parameters of `adder_agt_cfg` to make the agent active and enable the coverage.
-	5. Register the configuration object into the `uvm_config_db`,  `uvm_config_db #()::set(this, "adder_agt", "cfg", adder_agt_cfg);`
-	6. Move the instantiation code of the adder agent to the `build_adder_agent()` function
-	7. Call the function `build_adder_agent()` inside the `build_phase()` function.
-
-3. Open `adder_agent.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
-	1. Declare an atribute `adder_config` called `cfg`.
-	2. In the build phase retrive the configuration `uvm_config_db #(adder_config)::get(this, "", "cfg", cfg) ` and check for errors
-	3. Using an if statement check the `cfg.is_active` attribute to decide to instantiate or not the driver and the sequencer
-	4. Do the same in the conect phase to connect or not the driver to the sequencer.
+1. Create a `adder_config.sv` file in the `vrf/uvm/uvcs/adder_uvc` directory.
+   1. Add header guard.
+   2. Create a class `adder_config` that extends `uvm_object`
+   3. Register this class in the factory using the appropriate macro, which in this case is `` `uvm_component_utils(adder_config) ``.
+   4. The factory requires a constructor. Create the appropriate constructor for a `uvm_object`.
+   5. Declare an attribute  `uvm_active_passive_enum` called `is_active` and assign it a value of `UVM_ACTIVE`.
+   6. Declare an attribute  `bit` called `coverage_enable`.
+2. Open `top_env.sv`.
+   1. Declare an attribute  `adder_config` called `adder_agt_cfg`.
+   2. Create a void function called `build_adder_agent()` and inside.
+   3. Instantiate an `adder_config` called `adder_agt_cfg` using the UVM creation mechanism.
+      - Translated into code: `adder_agt_cfg = adder_config::type_id::create("adder_agt_cfg", this);`
+   4. Configure the parameters of `adder_agt_cfg` to make the agent active and enable the coverage.
+   5. Use the UVM configuration database `set` method to register the configuration object.
+      - Translated into code: `uvm_config_db #()::set(this, "adder_agt", "cfg", adder_agt_cfg);`
+   6. Move the instantiation code of the adder agent to the `build_adder_agent()` function.
+   7. Call the function `build_adder_agent()` inside the `build_phase()` function.
+3. Open `adder_agent.sv`.
+   1. Declare an attribute `adder_config` called `cfg`.
+   2. Inside the `build_phase()` function:
+   3. Use the UVM configuration database `get` method to retrieve the configuration for the configuration object  into `cfg` and check for errors. (**[Note 12](#note-12)**)
+   4. Using an `if` statement check `cfg.is_active` and if true instantiate instantiate the driver and the sequencer.
+   5. Inside the `connect_phase()` function:
+   6. Using an `if` statement check `cfg.is_active` and if true to connect the driver to the sequencer.
 4. Include `adder_config.sv` into `adder_pkg.sv`
 
 ## Coverage
 
-Another interesting feature we can add to the agent is to know much of the design we have tested. This is called coverage, and it is a way to check how many combinations of different inputs we have passed through out the DUT.
+Another useful feature for the agent is tracking how much of the design has been tested, known as coverage. Coverage measures the variety of input combinations that have been applied to the DUT.
 
-1. Create a `adder_coverage.sv` in the `vrf/uvm/uvcs/adder_uvc` directory
-	1. Create a class `adder_coverage` that extends `uvm_suscriber`
-	2. Register this class in the factory with the proper macro, in this case a `uvm_component_utils`.
-	3. The factory requires a constructor, create the proper constructor for a uvm object.
-2. Then 
-	1. Declare an atribute `adder_config` called `cfg`
-	1. Declare an atribute `adder_sequence_item` called `trans`
-	1. Declare an atribute `bit` called `is_covered`
+1. Create a `adder_coverage.sv` file in the `vrf/uvm/uvcs/adder_uvc` directory.
+   1. Add header guard.
+   2. Create a class `adder_coverage` that extends `uvm_suscriber` parametrized with the transaction `adder_sequence_item`.
+   3. Register this class in the factory using the appropriate macro, which in this case is `uvm_component_utils(adder_coverage)`.
+   4. The factory requires a constructor. Create the appropriate constructor for a `uvm_component`.
+   5. Declare an attribute `adder_config` called `cfg`.
+   6. Declare an attribute `adder_sequence_item` called `trans`.
+   7. Declare an attribute `bit` called `is_covered`.
 
-The important thing to know about the `uvm_suscriber` class is that it has a built-in analysis export for receiving transactions from a connected analysys port. To be more precise it has a `uvm_analysis_imp #(T, this_type) analysis_export;` that is instantiated `analysis_export = new("analysis_imp", this);` in the constructor. Making such a connection subscribes this component to any transactions emitted by the connected analysis port. The analysis port in the monitor calls a `write()` method to broadcast out a handle to a sequence_item. Each analysis imp export connected to the port must implement this `write()` method. 
+The important thing to know about the `uvm_suscriber` class is that it has a built-in analysis export for receiving transactions from a connected analysis port. To be more precise it has a `uvm_analysis_imp #(T, this_type) analysis_export;` that is instantiated `analysis_export = new("analysis_imp", this);` in the constructor. Making such a connection subscribes this component to any transactions emitted by the connected analysis port. The analysis port in the monitor calls a `write()` method to broadcast out a handle to a sequence_item. Each analysis imp export connected to the port must implement this `write()` method. (**[Note 15](#note-15)**)
 
 The implementation of the `write()` function must copy the sequence_item handle passed from the monitor to the coverage collectors handle and then called the coverage `sample()` method to actually collect coverage information.
 
-3. Create a coverage group that checks all the 256 by 256 combinations of A and B of the adder. 
-	1. Instanciate the covergroup using the `new()` keyword inside the constructor of the class.
-	2. Create a `build_phase` where you retreive the configuration object from the uvm_config_db and check for errors.
-	3. Create a `write()` funciton where the input is an `adder_sequence_item `and inside 
-	4. if `cfg.coverage_enable` is true, assign the value to `trans` and call the `sample()` function of the covergroup
-4. Optionally you can create a `report_phase` function that check if `cfg.coverage_enable` is true and display the coverage 
-	1. Using `uvm_info` and the `adder.cov.get_coverage()` method.
+1. Create a `covergroup` called `adder_cov` that checks all the 256 by 256 combinations of `A` and `B` of the adder. (**[Note 16](#note-16)**)
+2. Instantiate the `covergroup` using the `new()` keyword inside the constructor of the class.
+3. Create a `build_phase()` and inside:
+   1. Use the UVM configuration database `get` method to retrieve the configuration for the configuration object  into `cfg` and check for errors. (**[Note 12](#note-12)**)
+4. Create a `write()` function with an input of type `adder_sequence_item` called `t`.
+   1. Using an `if` statement check `cfg.coverage_enable` and if true assign the value of `t` into `trans` and call the `adder_cov.sample()` function.
+5. Create a `report_phase()` and inside
+   1. Using an `if` statement check `cfg.coverage_enable` and if true and display the coverage using the  `` `uvm_info() `` macro and the `adder.cov.get_coverage()` method.
 
-5. Open `adder_agent.sv` and
-	1. Declare an atribute `adder_coverage` called `cov` 
-	2. In the `build_phase` create an if statement that check `cfg.coverage_enable` to instantiate or not `cov` using the uvm mechanism
-	3. In the `connect_phase` create an if statement that check `cfg.coverage_enable` to connect or not the monitor to the coverage
-		1. mon.analysis_port.connect(cov.analysis_export);
+6. Open `adder_agent.sv`.
+   1. Declare an attribute `adder_coverage` called `cov`.
+   2. In the `build_phase()`.
+   3. Using an `if` statement check `cfg.coverage_enable` and if true instantiate an `adder_coverage` called `cov` using the UVM creation mechanism.
+      - Translated into code: `cov = adder_coverage::type_id::create("cov",this);`
+   4. In the `connect_phase()`.
+   5. Using an `if` statement check `cfg.coverage_enable` and if true connect the monitor to the coverage.
+      - Translated into code: `mon.analysis_port.connect(cov.analysis_export);`
 
 ## Scoreboard
 
 The primary role of a scoreboard in UVM is to verify that actual DUT outputs match predicted output values, we can follow a similar implemetation as the coreverage.
 
 1. Create a `top_scoreboard.sv` in the `vrf/uvm/env` directory
-	1. Create a class `top_scoreboard` that extends `uvm_suscriber`
-	2. Register this class in the factory with the proper macro, in this case a `uvm_component_utils`.
-	3. The factory requires a constructor, create the proper constructor for a uvm object.
-	4. Declare an atribute `adder_sequence_item` called `trans`
-	5. Declare an atribute `int` called `num_passed` and another called `num_failed` initialize with zero.
-2. Create a `write()` method that is called from the monitor with `adder_sequence_item` call `t `as an argument
-	1. Copy the content of `t` into `trans`
-	2. Using and if statement check if the information of the monitor transaction is correct and increase the `num_passed` and `num_failed` accordingly
+ 1. Create a class `top_scoreboard` that extends `uvm_suscriber`
+ 2. Register this class in the factory with the proper macro, in this case a `uvm_component_utils`.
+ 3. The factory requires a constructor, create the proper constructor for a uvm object.
+ 4. Declare an atribute `adder_sequence_item` called `trans`
+ 5. Declare an atribute `int` called `num_passed` and another called `num_failed` initialize with zero.
+2. Create a `write()` method that is called from the monitor with `adder_sequence_item` call `t`as an argument
+ 1. Copy the content of `t` into `trans`
+ 2. Using and if statement check if the information of the monitor transaction is correct and increase the `num_passed` and `num_failed` accordingly
 3. Create a `report_phase()` function that displays the values of passed and frailed transactions.
 4. Open `top_env.sv`
-	1. Declare an atribute `top_scoreboard` called `scoreboard`;
-	2. Instantiate the scoreboard using the using the uvm mechanism `::type_id::create()` called `scoreboard`
-	3. Connect the the scoreboard port to the monitor port, in this step the are two options
-		1. Connect directly the scoreboard to the agent monitor port or
-		2. Create a pass through port from the monitor to the agent and then conect the agent port to the scoreboard
+ 1. Declare an atribute `top_scoreboard` called `scoreboard`;
+ 2. Instantiate the scoreboard using the using the uvm mechanism `::type_id::create()` called `scoreboard`
+ 3. Connect the the scoreboard port to the monitor port, in this step the are two options
+  1. Connect directly the scoreboard to the agent monitor port or
+  2. Create a pass through port from the monitor to the agent and then conect the agent port to the scoreboard
 The advantage of the second option is that it better encapsulate the agent and from the point of view of an environment writer it is easier to undertand, the environment writer does not need to know the inner implementation of the agent, the only think he must worry about is how to connect properly the agent port to the scoreboard.
-	4. Inside `top_env.sv`
-		1. Create a `connect_phase()` function and connect the agent analysis port to the scoreboard analysis export.   adder_agt.analysis_port.connect(scoreboard.analysis_export);
-	5. Open `adder_agent` and 
-		1. Declare an atribute `uvm_analysis_port #(adder_sequence_item) analysis_port;`
-		2. Instantiate the analysis port in the `build_phase()` function
-		3. In the `connect_phase()` function connect the monitor analysis port and the agent analysis port
-	6. Add `top_scoreboard.sv` into the `top_env_pkg.sv`
-
-
+ 4. Inside `top_env.sv`
+  1. Create a `connect_phase()` function and connect the agent analysis port to the scoreboard analysis export.   adder_agt.analysis_port.connect(scoreboard.analysis_export);
+ 5. Open `adder_agent` and
+  1. Declare an atribute `uvm_analysis_port #(adder_sequence_item) analysis_port;`
+  2. Instantiate the analysis port in the `build_phase()` function
+  3. In the `connect_phase()` function connect the monitor analysis port and the agent analysis port
+ 6. Add `top_scoreboard.sv` into the `top_env_pkg.sv`
 
 make PLUS=uvm_set_type_override=adder_sequence_base,adder_sequence_rand_no_repeat
 
 In the test `build_phase` of `top_test` or in a extended class, let say `test_feat` of `top_test` you can put this override and select the test in the Makefile
 set_type_override_by_type( adder_sequence_base::get_type(), adder_sequence_directed::get_type() );
 
+Note: when using `+ntb_random_seed_automatic` the seed appears in both the simulation log and the coverage report.
 
-Note: when using `+ntb_random_seed_automatic` the seed appears in both the simulation log and the coverage report. 
-
+## Overrides
 
 ## Notes
 
@@ -627,7 +632,6 @@ Use for transitions
 - `uvm_sequence`
 - `uvm_sequence_item`
 
-
 ### Note 07
 
 ([**Sequence item**](#sequence-item-transaction))
@@ -768,7 +772,7 @@ endfunction : end_of_elaboration_phase
 
 ### Note 12
 
-([**Connect to the DUT**](#connect-to-the-dut))
+([**Connect to the DUT**](#connect-to-the-dut)) - ([**Advanced Agent**](#advanced-agent))
 
 The mechanism for configuring object properties is done using UVM Configuration Database
 
@@ -794,7 +798,7 @@ uvm_config_db #(type)::get(context, inst_name, field, value);
 - `field`: Tag to get value
 - `value`: Value to store value unchanged if not set
 
-Example
+Example:
 
 ```systemverilog
 // in tb.sv
@@ -803,6 +807,18 @@ uvm_config_db #(virtual adder_if)::set(null, "uvm_test_top.env.adder_agt", "vif"
 // in adder_driver.sv inside the build_phase
 if ( !uvm_config_db #(virtual adder_if)::get(get_parent(), "", "vif", vif) ) begin
   `uvm_fatal(get_name(), "Could not retrieve adder_if from config db")
+end
+```
+
+Example:
+
+```systemverilog
+// in top_env.sv build_phase
+uvm_config_db #(adder_config)::set(this, "adder_agt", "cfg", adder_agt_cfg);
+
+// in adder_agent.sv inside the build_phae
+if ( !uvm_config_db #(adder_config)::get(this, "", "cfg", cfg) ) begin
+      `uvm_fatal(get_name(), "Could not retrieve adder_config from config db")
 end
 ```
 
@@ -842,28 +858,53 @@ endtask : do_mon
 
 ## Note 15
 
-([**Monitor**](#monitor))
+([**Monitor**](#monitor)) - ([**Coverage**](#coverage))
+
+TLM ports declarations.
+
+Example:
 
 ```systemverilog
 uvm_analysis_port #(adder_sequence_item) analysis_port;
 analysis_port = new("analysis_port", this);
 
-uvm_analysis_imp #(adder_sequence_ite) analysis_export;
+uvm_analysis_imp #(adder_sequence_item) analysis_export;
 analysis_export = new("analysis_imp", this);
 ```
 
+## Note 16
+
+ ([**Coverage**](#coverage))
+
+Coverage group for adder.
+
+Example:
+
+```systemverilog
+  covergroup adder_cov;
+    //option.per_instance = 1;
+    cp_A: coverpoint trans.A {
+      bins a_bins[] = { [0:255] };
+    }
+    cp_B: coverpoint trans.B {
+      bins b_bins[] = { [0:255] };
+    }
+    cp_cross: cross cp_A, cp_B;
+  endgroup
+
+
+```
 
 ## References
 
-- [1] UVM Cookbook | Cookbook | Siemens Verification Academy, Verification Academy. Accessed: Jun. 03, 2024. [Online]. Available: https://verificationacademy.com/cookbook/uvm-universal-verification-methodology/
+- [1] UVM Cookbook | Cookbook | Siemens Verification Academy, Verification Academy. Accessed: Jun. 03, 2024. [Online]. Available: <https://verificationacademy.com/cookbook/uvm-universal-verification-methodology/>
 
-- [2] S. Sutherland and T. Fitzpatrick, "UVM Rapid Adoption: A Practical Subset of UVM," in Proc. Design and Verification Conference (DVCon), March 2015. Available: https://dvcon-proceedings.org/wp-content/uploads/uvm-rapid-adoption-a-practical-subset-of-uvm-paper.pdf
+- [2] S. Sutherland and T. Fitzpatrick, "UVM Rapid Adoption: A Practical Subset of UVM," in Proc. Design and Verification Conference (DVCon), March 2015. Available: <https://dvcon-proceedings.org/wp-content/uploads/uvm-rapid-adoption-a-practical-subset-of-uvm-paper.pdf>
 
-- [3] (IEEE Std 1800-2017) - IEEE Standard for SystemVerilog--Unified Hardware Design, Specification, and Verification Language. IEEE. doi: 10.1109/IEEESTD.2018.8299595. [Online]. Available: https://ieeexplore.ieee.org/document/8299595
+- [3] (IEEE Std 1800-2017) - IEEE Standard for SystemVerilog--Unified Hardware Design, Specification, and Verification Language. IEEE. doi: 10.1109/IEEESTD.2018.8299595. [Online]. Available: <https://ieeexplore.ieee.org/document/8299595>
 
-- [4] ClueLogic - Providing the clues to solve your verification problems. Accessed: Jun. 03, 2024. [Online]. Available: https://cluelogic.com/
+- [4] ClueLogic - Providing the clues to solve your verification problems. Accessed: Jun. 03, 2024. [Online]. Available: <https://cluelogic.com/>
 
-- [5] “Easier UVM.” Accessed: Jun. 04, 2024. [Online]. Available: https://www.doulos.com/knowhow/systemverilog/uvm/easier-uvm/
+- [5] “Easier UVM.” Accessed: Jun. 04, 2024. [Online]. Available: <https://www.doulos.com/knowhow/systemverilog/uvm/easier-uvm/>
 
-- [6] “UVM (Universal Verification Methodology).” Accessed: Jun. 04, 2024. [Online]. Available: https://www.accellera.org/downloads/standards/uvm
-
+- [6] “UVM (Universal Verification Methodology).” Accessed: Jun. 04, 2024. [Online]. Available: <https://www.accellera.org/downloads/standards/uvm>
