@@ -768,7 +768,9 @@ endtask : body
 
 It is important to notice that it is necessary to surround the declaration and instantiation of `seq` and the call to `seq.start(env.adder_agt.sqr)` in a `begin`, `end` block. If you do not do it this way you will get an error.
 
-An alternative to avoid using the `begin`, `end` block is to declare and atribute `adder_sequence_base` called `seq` outside the `run_phase()` task, next to  `top_env env;` or before calling `phase.raise_objection(this)`.
+An alternative to avoid using the `begin`, `end` block is to declare and attribute `adder_sequence_base` called `seq` outside the `run_phase()` task, next to  `top_env env;` or before calling `phase.raise_objection(this)`.
+
+Do not put a `` `uvm_info() `` macro at the beginning of the `run_phase()` for some reason it creates an error when trying to execute code after. When I removed the macro the `begin` block was not necessary.  I put the macro as the second command and it also worked.
 
 ### Note 11
 

@@ -36,14 +36,17 @@ endfunction : end_of_elaboration_phase
 
 
 task top_test::run_phase(uvm_phase phase);
-  `uvm_info(get_type_name(), "start run_phase raise objection", UVM_MEDIUM)
+  //`uvm_info(get_type_name(), "start run_phase raise objection", UVM_MEDIUM)
+
+  adder_sequence_base seq;
+  seq = adder_sequence_base::type_id::create("seq");
+
   phase.raise_objection(this);
-  begin
-    adder_sequence_base seq;
-    seq = adder_sequence_base::type_id::create("seq");
+  //begin
     seq.start(env.adder_agt.sqr);
-  end
+  //end
   phase.drop_objection(this);
+
   `uvm_info(get_type_name(), "end run_phase drop objection", UVM_MEDIUM)
 endtask : run_phase
 

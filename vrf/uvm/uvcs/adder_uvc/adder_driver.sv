@@ -33,7 +33,6 @@ task adder_driver::run_phase(uvm_phase phase);
     //`uvm_info(get_type_name(), $sformatf("A = %4d, B = %4d", req.A, req.B), UVM_MEDIUM)
     do_drive();
     seq_item_port.item_done();
-    #10;
   end
   `uvm_info(get_type_name(), "end run_phase", UVM_MEDIUM)
 endtask : run_phase
@@ -41,7 +40,7 @@ endtask : run_phase
 task adder_driver::do_drive();
   vif.A <= req.A;
   vif.B <= req.B;
-  #10;
+  #20;
 endtask : do_drive
 
 `endif // ADDER_DRIVER_SV

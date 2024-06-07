@@ -161,11 +161,80 @@ endfunction : new
 
 
 task adder_sequence_directed::body();
+
     req = adder_sequence_item::type_id::create("req");
     start_item(req);
     req.A = A_input;
     req.B = B_input;
     finish_item(req);
+
 endtask : body
+
+// ===============================================================================
+// ===============================================================================
+// ===============================================================================
+// ===============================================================================
+
+class adder_sequence_manual extends adder_sequence_base;
+
+  `uvm_object_utils(adder_sequence_manual)
+
+  extern function new(string name = "");
+  extern virtual task body();
+
+endclass : adder_sequence_manual
+
+
+function adder_sequence_manual::new(string name = "");
+  super.new(name);
+endfunction : new
+
+
+task adder_sequence_manual::body();
+
+    req = adder_sequence_item::type_id::create("req");
+    start_item(req);
+    req.A = 8'd10;
+    req.B = 8'd20;
+    finish_item(req);
+
+    req = adder_sequence_item::type_id::create("req");
+    start_item(req);
+    req.A = 8'd1;
+    req.B = 8'd2;
+    finish_item(req);
+
+endtask : body
+
+// ===============================================================================
+// ===============================================================================
+// ===============================================================================
+// ===============================================================================
+
+class adder_sequence_of_sequences extends adder_sequence_base;
+
+  `uvm_object_utils(adder_sequence_of_sequences)
+
+  adder_sequence_manual   seq_man;
+  adder_sequence_directed seq_dir;
+
+  extern function new(string name = "");
+  extern virtual task body();
+
+endclass : adder_sequence_of_sequences
+
+
+function adder_sequence_of_sequences::new(string name = "");
+  super.new(name);
+endfunction : new
+
+
+task adder_sequence_of_sequences::body();
+  seq_man = adder_sequence_manual::type_id::create("seq_man");
+  seq_dir = adder_sequence_directed::type_id::create("seq_dir");
+  seq_man.start(m_sequencer, this);
+  seq_dir.start(m_sequencer, this);
+endtask : body
+
 
 `endif // ADDER_SEQ_BASE_SV
