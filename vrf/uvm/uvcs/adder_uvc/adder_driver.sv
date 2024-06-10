@@ -38,9 +38,9 @@ task adder_driver::run_phase(uvm_phase phase);
 endtask : run_phase
 
 task adder_driver::do_drive();
-  vif.A <= req.A;
-  vif.B <= req.B;
-  #20;
+  vif.cb.A <= req.A;
+  vif.cb.B <= req.B;
+  @(vif.cb);
 endtask : do_drive
 
 `endif // ADDER_DRIVER_SV

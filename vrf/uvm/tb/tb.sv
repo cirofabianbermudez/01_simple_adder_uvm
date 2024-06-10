@@ -13,14 +13,16 @@ module tb;
              rst = 0;
   end
   
-  adder_if vif();
+  adder_if vif(clk, rst);
 
   adder dut (
+    .clk(vif.clk),
+    .rst(vif.rst),
     .A(vif.A),
     .B(vif.B),
     .C(vif.C)
   );
-
+  
   initial begin
     $timeformat(-9, 0, "ns", 10);
     $fsdbDumpvars;

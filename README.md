@@ -452,6 +452,15 @@ Modify `adder.sv` to be sequential, add a `clk` and `rst` inputs.
 Modify `adder_if.sv`.
 
 - Pass `clk` as an input
+- Add `rst` to the signals
+- Add a `clocking` block called `cb` with the positive edge of  `clk` in the sensitivity list and the corresponding signals inside. (**[Note 18](#note-18)**)
+
+Modify `adder_driver.sv`
+
+- Add synchronous behavior.
+
+
+
 
 ## Notes
 
@@ -954,6 +963,60 @@ endgroup
 ## Note 17
 
 When using `+ntb_random_seed_automatic` the seed appears in both the simulation log and the coverage report.
+
+## Note 18
+
+ ([**Sequential version**](#sequential-version))
+
+Clocking Block
+
+A `clocking` block in SystemVerilog is used to group signals that are synchronous to a particular clock. It defines the timing relationship (e.g., input, output, inout) with respect to the clock and can help in avoiding race conditions during verification.
+
+Modport
+
+A `modport` in SystemVerilog is used to define different views or access permissions for signals within an interface. It specifies which signals are inputs, outputs, or inouts for a particular module or block using the interface.
+
+Example 
+
+```systemverilog
+clocking cb @(posedge clk);
+   default input #1ns output #1ns;
+   output rst;
+   output A;
+   output B;
+   input  C;
+endclocking : cb
+
+//modport drv (clocking cb, output A, output B, output rst);
+//modport mon (clocking cb, input C);
+```
+
+Do You Need Both?
+Whether you need both a clocking block and modports depends on your design requirements:
+
+Clocking Block: Use a clocking block to define the timing relationship of signals with respect to a clock. This is particularly useful in testbenches to avoid race conditions and manage signal sampling and driving in a synchronized manner.
+
+Modport: Use modports to define access permissions for different modules that will use the interface. This is important for ensuring proper signal direction and access control in your design.
+
+Something to keep in mind is that while the directions specified within clocking blocks help in understanding the intended usage of signals with respect to clocking events, they don't enforce any behavioral constraints on the signals themselves, that is the job of modport.
+
+Combining clocking blocks and modports provides a robust structure for your SystemVerilog interfaces, enhancing both timing control and modular access permissions. This approach can help avoid common pitfalls such as race conditions and unclear signal directionality, leading to more reliable and maintainable designs.
+
+[About modport in UVM](https://verificationacademy.com/forums/t/modport-in-uvm/38351)
+
+> Modport in UVM, they have little verification value for all the effort they take to create. The main advantage of modports is for synthesis to indicate direction. Most simulation tools fail to enforce directions, especially when used in virtual interfaces.
+
+> SystemVerilog interfaces can also contain modports, which allow the direction of the interface signals to be organised dependent on a useage viewpoint. For instance, a bus master would always drive an address and strobe signal, whilst a bus slave would always receive these signals. Although, from a methodology perspective this appears to be a good idea, there is an element of clumsiness in the language surrounding the modport construct for it not to be particularly useful in practice. Page 75 Cookbook
+
+
+## Note 19
+
+A race condition in digital design or verification occurs when the behavior of a system depends on the timing or sequence of events, and the outcome becomes unpredictable due to these dependencies. In the context of clocked digital systems, a race condition can happen when multiple signals or processes try to access or modify shared data simultaneously, leading to inconsistencies or errors in the system's behavior
+
+For example, in a clocked system, if two signals are trying to update the same register at the same time without proper synchronization, a race condition may occur. Depending on which signal reaches the register first or the exact timing of their updates relative to the clock edge, the final value stored in the register may be unexpected or incorrect.
+
+Race conditions are critical issues in digital design and verification, as they can lead to unreliable behavior, functional failures, or even catastrophic system failures. Proper synchronization techniques, such as clocking blocks in SystemVerilog, are employed to mitigate race conditions and ensure the correct operation of digital systems.
+
 
 ## References
 
