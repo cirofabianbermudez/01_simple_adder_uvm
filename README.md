@@ -442,6 +442,17 @@ and select the test in the Makefile
 UVM_TESTNAME=test_feat
 ```
 
+## Sequential version
+
+Modify `adder.sv` to be sequential, add a `clk` and `rst` inputs.
+
+- If the `rst` is asserted `C` must be zero.
+- Otherwise update the value of `C`.
+
+Modify `adder_if.sv`.
+
+- Pass `clk` as an input
+
 ## Notes
 
 ### Note 01
