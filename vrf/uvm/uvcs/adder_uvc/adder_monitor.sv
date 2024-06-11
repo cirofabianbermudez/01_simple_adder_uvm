@@ -39,6 +39,8 @@ endtask : run_phase
 
 
 task adder_monitor::do_mon();
+  wait(vif.rst !== 1);
+  @(vif.cb iff(vif.rst === 0 ));
   forever @(vif.C) begin
     trans.A = vif.A;
     trans.B = vif.B;

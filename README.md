@@ -452,14 +452,16 @@ Modify `adder.sv` to be sequential, add a `clk` and `rst` inputs.
 Modify `adder_if.sv`.
 
 - Pass `clk` as an input
-- Add `rst` to the signals
+- Pass `rst` as an input
 - Add a `clocking` block called `cb` with the positive edge of  `clk` in the sensitivity list and the corresponding signals inside. (**[Note 18](#note-18)**)
 
 Modify `adder_driver.sv`
 
-- Add synchronous behavior.
+- Add synchronous behavior using `@(vif.cb)` and `vif.cb.A` and `vif.cb.B`
 
+Modify `adder_monitor.sv`
 
+- Modify the `run_phase()` to wait until `rst` is low.
 
 
 ## Notes
@@ -981,10 +983,10 @@ Example
 ```systemverilog
 clocking cb @(posedge clk);
    default input #1ns output #1ns;
-   output rst;
    output A;
    output B;
    input  C;
+   input rst;
 endclocking : cb
 
 //modport drv (clocking cb, output A, output B, output rst);

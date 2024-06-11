@@ -11,14 +11,13 @@ interface adder_if #(
   logic [Width-1:0] A;
   logic [Width-1:0] B;
   logic [Width-1:0] C;
-  //logic             rst;
 
   clocking cb @(posedge clk);
     default input #1ns output #1ns;
-    output rst;
     output A;
     output B;
     input  C;
+    input  rst;
   endclocking : cb
 
 endinterface : adder_if
