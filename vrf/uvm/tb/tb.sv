@@ -6,14 +6,11 @@ module tb;
   logic clk;
   always #5 clk = ~clk;
 
-  // Reset sequence
-  logic rst;
   initial begin
-    clk = 0; rst = 1; #10;
-             rst = 0;
+    clk = 0;
   end
   
-  adder_if vif(clk, rst);
+  adder_if vif(clk);
 
   adder dut (
     .clk(vif.clk),

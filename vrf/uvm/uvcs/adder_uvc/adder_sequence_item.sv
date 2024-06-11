@@ -9,6 +9,8 @@ class adder_sequence_item extends uvm_sequence_item;
   rand logic [7:0] B;
        logic [7:0] C;
 
+  rand logic       rst;
+
   extern function new(string name = "");
 
   extern function void do_copy(uvm_object rhs);
@@ -16,10 +18,15 @@ class adder_sequence_item extends uvm_sequence_item;
   extern function void do_print(uvm_printer printer);
   extern function string convert2string();
 
-  constraint adder_seq_const_small {
+  constraint all_values_constraint {
     A inside {[0:255]};
     B inside {[0:255]};
   }
+
+  constraint rst_constraint {
+    rst dist { 0:=9, 1:= 1};
+  }
+
 
 endclass : adder_sequence_item 
 
@@ -37,6 +44,7 @@ function void adder_sequence_item::do_copy(uvm_object rhs);
   A = rhs_.A;
   B = rhs_.B;
   C = rhs_.C;   
+  rst = rhs_.rst;   
 endfunction : do_copy
 
 
@@ -49,6 +57,7 @@ function bit adder_sequence_item::do_compare(uvm_object rhs, uvm_comparer compar
   result &= (A == rhs_.A);
   result &= (B == rhs_.B);
   result &= (C == rhs_.C);
+  result &= (rst == rhs_.rst);
   return result;
 endfunction : do_compare
 
@@ -67,8 +76,9 @@ function string adder_sequence_item::convert2string();
   $sformat(s, {"%s\n",
     "A = 'h%0h  'd%0d\n", 
     "B = 'h%0h  'd%0d\n", 
-    "C = 'h%0h  'd%0d\n"},
-    get_full_name(), A, A, B, B, C, C);
+    "C = 'h%0h  'd%0d\n",
+    "rst = 'h%0h  'd%0d\n", },
+    get_full_name(), A, A, B, B, C, C,rst,rst);
   return s;
 endfunction : convert2string
 
