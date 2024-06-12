@@ -463,6 +463,9 @@ Modify `adder_monitor.sv`
 
 - Modify the `run_phase()` to wait until `rst` is low.
 
+    `if ( !( req.randomize() with {  rst dist {0:=90, 1:=10}; } ) ) begin`
+
+
 
 ## Notes
 

@@ -39,14 +39,15 @@ endtask : run_phase
 
 
 task adder_monitor::do_mon();
-  wait(vif.rst !== 1);
-  @(vif.cb iff(vif.rst === 0 ));
+  //wait(vif.rst !== 1);
+  //@(vif.cb iff(vif.rst === 0 ));
   forever @(vif.C) begin
     trans.A = vif.A;
     trans.B = vif.B;
     trans.C = vif.C;
+    trans.rst = vif.rst;
     analysis_port.write(trans);
-    `uvm_info(get_type_name(), $sformatf("A = %4d, B = %4d, C =  %4d", vif.A, vif.B, vif.C), UVM_MEDIUM)
+    `uvm_info(get_type_name(), $sformatf("A = %4d, B = %4d, C =  %4d, rst = %4d", vif.A, vif.B, vif.C, vif.rst), UVM_MEDIUM)
   end
 endtask : do_mon
 

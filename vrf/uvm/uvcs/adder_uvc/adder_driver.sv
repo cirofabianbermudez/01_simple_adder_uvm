@@ -38,9 +38,19 @@ task adder_driver::run_phase(uvm_phase phase);
 endtask : run_phase
 
 task adder_driver::do_drive();
-  vif.cb.A <= req.A;
-  vif.cb.B <= req.B;
-  @(vif.cb);
+  if (req.trans_type == TRANS_ASYNC) begin
+    vif.rst = req.rst;
+    vif.A   = req.A;
+    vif.B   = req.B;
+  end else begin
+    @(vif.cb);
+    vif.cb.rst <= req.rst;
+    vif.cb.A   <= req.A;
+    vif.cb.B   <= req.B;
+  end
+  if (req.trans_stage == TRANS_LAST) begin
+    repeat(2) @(vif.cb);
+  end
 endtask : do_drive
 
 `endif // ADDER_DRIVER_SV

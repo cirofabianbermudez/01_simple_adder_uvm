@@ -9,7 +9,9 @@ class adder_sequence_item extends uvm_sequence_item;
   rand logic [7:0] B;
        logic [7:0] C;
 
-  rand logic       rst;
+  rand logic      rst;
+  trans_stage_t   trans_stage = TRANS_MIDDLE;
+  trans_type_t    trans_type  = TRANS_SYNC;
 
   extern function new(string name = "");
 
@@ -23,10 +25,10 @@ class adder_sequence_item extends uvm_sequence_item;
     B inside {[0:255]};
   }
 
-  constraint rst_constraint {
-    rst dist { 0:=9, 1:= 1};
-  }
-
+ constraint rst_constraint {
+   rst inside {0,1};
+   rst dist { 0 := 90, 1 := 10};
+ }
 
 endclass : adder_sequence_item 
 
@@ -77,7 +79,7 @@ function string adder_sequence_item::convert2string();
     "A = 'h%0h  'd%0d\n", 
     "B = 'h%0h  'd%0d\n", 
     "C = 'h%0h  'd%0d\n",
-    "rst = 'h%0h  'd%0d\n", },
+    "rst = 'h%0h  'd%0d\n"},
     get_full_name(), A, A, B, B, C, C,rst,rst);
   return s;
 endfunction : convert2string

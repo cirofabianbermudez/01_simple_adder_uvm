@@ -44,6 +44,7 @@ task top_test::run_phase(uvm_phase phase);
   phase.raise_objection(this);
   //begin
     seq.start(env.adder_agt.sqr);
+
   //end
   phase.drop_objection(this);
 

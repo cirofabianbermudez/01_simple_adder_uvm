@@ -6,6 +6,7 @@ package adder_pkg;
   `include "uvm_macros.svh"
   import uvm_pkg::*;
 
+  `include "adder_typedefs.sv"
   `include "adder_sequence_item.sv"
   `include "adder_config.sv"
   `include "adder_sequencer.sv"

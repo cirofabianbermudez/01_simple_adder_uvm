@@ -5,7 +5,7 @@ class adder_sequence_base extends uvm_sequence #(adder_sequence_item);
 
   `uvm_object_utils(adder_sequence_base)
 
-  int n = 10;
+  int n = 100;
 
   extern function new(string name = "");
   extern virtual task body();
@@ -146,9 +146,6 @@ class adder_sequence_directed extends adder_sequence_base;
 
   `uvm_object_utils(adder_sequence_directed)
 
-  bit [7:0] A_input = 8'd8;
-  bit [7:0] B_input = 8'd8;
-
   extern function new(string name = "");
   extern virtual task body();
 
@@ -164,8 +161,9 @@ task adder_sequence_directed::body();
 
     req = adder_sequence_item::type_id::create("req");
     start_item(req);
-    req.A = A_input;
-    req.B = B_input;
+    req.A = 8'd8;
+    req.B = 8'd8;
+    req.rst = 8'd0;
     finish_item(req);
 
 endtask : body
@@ -196,12 +194,14 @@ task adder_sequence_manual::body();
     start_item(req);
     req.A = 8'd10;
     req.B = 8'd20;
+    req.rst = 1'd0;
     finish_item(req);
 
     req = adder_sequence_item::type_id::create("req");
     start_item(req);
     req.A = 8'd1;
     req.B = 8'd2;
+    req.rst = 1'd0;
     finish_item(req);
 
 endtask : body
@@ -236,5 +236,90 @@ task adder_sequence_of_sequences::body();
   seq_dir.start(m_sequencer, this);
 endtask : body
 
+
+// ===============================================================================
+// ===============================================================================
+// ===============================================================================
+// ===============================================================================
+
+class adder_sequence_rst extends adder_sequence_base;
+
+  `uvm_object_utils(adder_sequence_rst)
+
+  extern function new(string name = "");
+  extern virtual task body();
+
+endclass : adder_sequence_rst
+
+
+function adder_sequence_rst::new(string name = "");
+  super.new(name);
+endfunction : new
+
+task adder_sequence_rst::body();
+
+  req = adder_sequence_item::type_id::create("req");
+  start_item(req);
+  req.A   = 8'd2;
+  req.B   = 8'd2;
+  req.rst = 1'd1;
+  req.trans_stage = TRANS_FISRT;
+  req.trans_type  = TRANS_ASYNC;
+  finish_item(req);
+
+  req = adder_sequence_item::type_id::create("req");
+  start_item(req);
+  req.A   = 8'd1;
+  req.B   = 8'd1;
+  req.rst = 1'd0;
+  finish_item(req);
+
+  req = adder_sequence_item::type_id::create("req");
+  start_item(req);
+  req.A   = 8'd3;
+  req.B   = 8'd3;
+  req.rst = 1'd0;
+  finish_item(req);
+
+  req = adder_sequence_item::type_id::create("req");
+  start_item(req);
+  req.A   = 8'd4;
+  req.B   = 8'd4;
+  req.rst = 1'd0;
+  req.trans_stage = TRANS_LAST;
+  finish_item(req);
+
+endtask : body
+
+
+// ===============================================================================
+// ===============================================================================
+// ===============================================================================
+// ===============================================================================
+
+class adder_sequence_with_rst extends adder_sequence_base;
+
+  `uvm_object_utils(adder_sequence_with_rst)
+
+  adder_sequence_rst   seq_rst;
+  adder_sequence_base  seq_base;
+
+  extern function new(string name = "");
+  extern virtual task body();
+
+endclass : adder_sequence_with_rst
+
+
+function adder_sequence_with_rst::new(string name = "");
+  super.new(name);
+endfunction : new
+
+
+task adder_sequence_with_rst::body();
+  seq_rst  = adder_sequence_rst::type_id::create("seq_rst");
+  seq_base = adder_sequence_base::type_id::create("seq_base");
+  seq_rst.start(m_sequencer, this);
+  seq_base.start(m_sequencer, this);
+endtask : body
 
 `endif // ADDER_SEQ_BASE_SV

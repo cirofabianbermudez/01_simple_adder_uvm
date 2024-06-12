@@ -4,7 +4,7 @@
 interface adder_if #(
   parameter Width = 8
 )(
-  input logic clk,
+  input logic clk
 );
 
   logic [Width-1:0] A;
@@ -16,7 +16,7 @@ interface adder_if #(
     default input #1ns output #1ns;
     output A;
     output B;
-    output rst
+    output rst;
     input  C;
   endclocking : cb
 
