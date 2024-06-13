@@ -466,6 +466,15 @@ Modify `adder_monitor.sv`
     `if ( !( req.randomize() with {  rst dist {0:=90, 1:=10}; } ) ) begin`
 
 
+Header guards are not need in packages
+
+
+    // Parallel sequences
+    // https://verificationacademy.com/topics/uvm-universal-verification-methodology/advanced-uvm/the-proper-care-and-feeding-of-sequences/
+
+    // Virtual sequences
+    // https://verificationacademy.com/topics/uvm-universal-verification-methodology/advanced-uvm/layered-sequences/
+
 
 ## Notes
 
